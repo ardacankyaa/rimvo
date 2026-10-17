@@ -1,0 +1,6 @@
+.rimvo-brand-mark{display:block;width:40px;height:26px;object-fit:contain;flex:none}
+.topbar>.brand-lockup{flex:none;gap:10px}
+.brand-caption,.recording-eyebrow{display:inline-flex;align-items:center;gap:6px}
+.brand-caption .rimvo-brand-mark,.recording-eyebrow .rimvo-brand-mark{width:24px;height:18px}
+@media(max-width:480px){.brand-lockup{gap:0}.brand-lockup .rimvo-brand-mark{width:30px;height:24px}.brand-lockup h1{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%)}}
+@media(min-width:900px) and (min-height:640px) and (max-height:719px) and (pointer:fine){.topbar .audio-add,.topbar .shortcut-open,.topbar .session-menu>summary{height:28px;min-height:28px;width:28px;padding:4px}}

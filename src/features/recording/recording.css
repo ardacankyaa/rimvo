@@ -1,0 +1,25 @@
+.recording-header{display:flex;align-items:center}.recording-toggle{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font:inherit;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.recording-dot{display:inline-block;width:10px;height:10px;flex:none;background:#a6534c;border-radius:50%}.recording-toggle.is-recording{border-color:#a6534c}.recording-toggle.is-recording .recording-dot{border-radius:2px}
+.recording-dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 32px);box-sizing:border-box;overflow:auto;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 16px 60px #0006}.recording-dialog::backdrop{background:#0008}.recording-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}.recording-dialog h2{margin:5px 0 0;font-size:24px;font-weight:500}.recording-eyebrow{font-size:10px;opacity:.65;letter-spacing:.08em}.recording-dialog button{min-height:40px;padding:8px 13px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer}.recording-dialog button:disabled,.recording-toggle:disabled{opacity:.45;cursor:default}.recording-dialog .recording-close{font-size:24px;width:40px;padding:0;flex:none}.recording-take{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:18px 0;border-block:1px solid var(--line);margin-bottom:18px}.recording-take strong{font-size:30px;font-weight:400;font-variant-numeric:tabular-nums}.recording-take>span:last-child{font-size:12px;opacity:.65}.recording-save-actions{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.recording-dialog .recording-primary{background:#cfbc94;border-color:#cfbc94;color:#202124;font-weight:600}.recording-dialog audio{display:block;width:100%;height:42px}.recording-name{display:grid;gap:8px;margin-block:16px}.recording-name label{font-size:12px}.recording-name input{width:100%;min-width:0;box-sizing:border-box;background:transparent;color:inherit;border:1px solid var(--line);border-radius:5px;padding:10px;font:inherit}.recording-name>span{font-size:11px;opacity:.65;overflow-wrap:anywhere}.recording-notice{margin:16px 0 0;font-size:11px;line-height:1.5;opacity:.75;overflow-wrap:anywhere}.recording-error{font-size:12px;line-height:1.5;color:#da9990}.recording-replace{padding-top:12px;border-top:1px solid var(--line);font-size:12px}.recording-replace button{margin:4px}.recording-toggle:focus-visible,.recording-dialog button:focus-visible,.recording-dialog input:focus-visible{outline:2px solid #cfbc94;outline-offset:3px}
+.legal-links{display:flex;align-items:center;gap:12px;flex:none}.legal-links button{background:transparent;border:0;padding:0 2px;min-height:24px;font:inherit;font-size:10px;color:var(--muted)}.legal-links button:focus-visible{outline:2px solid var(--deck-a);outline-offset:2px}.mobile-dock-close{display:none}
+@media(max-width:899px){.recording-toggle{min-height:36px;padding:0 7px;gap:5px;font-size:10px}.recording-dialog{padding:18px}.legal-links{gap:7px}.legal-links button{font-size:9px}}
+@media(max-width:380px){.recording-toggle{width:36px;padding:0}.recording-toggle:not(.is-recording)>span:last-child{display:none}.recording-toggle.is-recording{width:57px}.recording-dialog button{min-height:44px}.legal-links{gap:5px}}
+@media(max-width:899px){.recording-name input{font-size:16px}}
+@media(max-width:380px){.workspace-search input::placeholder{color:transparent}}
+
+/* Dialog actions keep their content size instead of inheriting header icon dimensions. */
+.audio-session .recording-dialog button{width:auto;height:auto;min-height:44px;padding:8px 13px;max-width:100%;white-space:normal;line-height:1.4}
+.audio-session .recording-dialog>button,.audio-session .recording-name>button{width:100%}
+.audio-session .recording-dialog .recording-close{width:44px;height:44px;padding:0;flex:none}
+.recording-save-actions button{flex:1 0 auto}
+
+.recording-header{flex:none;min-width:0}
+.recording-take-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.recording-take-actions .recording-new{flex:1}.recording-take-actions .recording-discard{color:var(--muted)}
+@media(min-width:900px) and (min-height:640px) and (max-height:719px) and (pointer:fine){.audio-session .recording-toggle{height:28px;min-height:28px;padding:0 8px}}
+
+.recording-format{display:grid;gap:8px;margin-top:18px}
+.recording-format label{font-size:12px}
+.recording-format select{width:100%;min-height:44px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.recording-format p{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+.recording-format select:focus-visible{outline:2px solid #cfbc94;outline-offset:3px}
+@media(max-width:899px){.recording-format select{font-size:16px}}

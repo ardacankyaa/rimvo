@@ -1,0 +1,12 @@
+RIMVO original demo compositions and artwork
+
+After hours; Open circuit
+Original synthesized percussion, bass, pads and vector artwork. No external samples or recordings.
+
+To the extent possible under law, the authors waive copyright and related rights to these assets under CC0 1.0 Universal. You may copy, modify, distribute and perform the work, even commercially, without asking permission. The work is provided without warranty.
+
+CC0 1.0 Universal public-domain dedication: https://creativecommons.org/publicdomain/zero/1.0/
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+Generator source: scripts/generate-demos.mjs
+Provenance, tempo, first beat, file hashes and measured sample properties: manifest.json

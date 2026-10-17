@@ -1,0 +1,1 @@
+RIMVO unsupported-format test fixture. Synthetic text only.

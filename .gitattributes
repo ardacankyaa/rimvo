@@ -1,0 +1,16 @@
+* text=auto
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.wav binary
+*.mp3 binary
+*.flac binary
+.agents/skills/** -text
+docs/history/evidence/** -text
+*.gz binary
+
+# Portable container scripts and workflow configuration
+.devcontainer/*.sh text eol=lf
+.github/**/*.yml text eol=lf
+.github/**/*.yaml text eol=lf

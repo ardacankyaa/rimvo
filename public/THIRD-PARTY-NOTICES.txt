@@ -1,0 +1,8 @@
+MP3 export uses @breezystack/lamejs 1.2.7, unmodified.
+License: LGPL-3.0
+Source: https://github.com/shijinyu/lamejs
+Upstream: https://github.com/zhuker/lamejs
+LAME project: https://lame.sourceforge.net/
+License text: https://www.gnu.org/licenses/lgpl-3.0.html
+
+The application's MIT license does not replace this dependency's license.
