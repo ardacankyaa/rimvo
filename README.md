@@ -4,6 +4,8 @@
 
 [MIT license](LICENSE)
 
+**[Open RIMVO in your browser](https://ardacankyaa.github.io/rimvo/)** — no installation or local server needed. Choose **Try a mix** to start with the bundled demo tracks, or add your own music.
+
 ---
 
 ## Overview
@@ -26,7 +28,7 @@
 - **Node.js**: `24+` or `22.13+`
 - **npm**: `10+`
 
-### Installation & Run
+### Run locally for development
 
 1. Clone or download the repository:
    ```bash
@@ -70,7 +72,9 @@ Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, m
 | `npm run lint` | Lints source files with ESLint |
 | `npm run typecheck`| Validates TypeScript types across the codebase |
 
-The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), and the full test suite on pushes to `main` and pull requests. The audio tests include a long transport simulation and can take several minutes.
+The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), and the full test suite on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes.
+
+The hosted build uses `npm run build -- --base=/rimvo/` so assets, demos, and audio workers resolve under the public site's path. `npm run build` remains available for other static hosts or local previews. The public site stays available when your own computer is off.
 
 ## Project Structure
 
