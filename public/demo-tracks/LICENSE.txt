@@ -8,5 +8,5 @@ To the extent possible under law, the authors waive copyright and related rights
 CC0 1.0 Universal public-domain dedication: https://creativecommons.org/publicdomain/zero/1.0/
 Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
 
-Generator source: scripts/generate-demos.mjs
+This release includes the finished assets; the original synthesis generator is not included.
 Provenance, tempo, first beat, file hashes and measured sample properties: manifest.json

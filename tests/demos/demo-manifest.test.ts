@@ -12,7 +12,6 @@ type DemoManifestEntry = {
   license: string
   licenseUrl: string
   licenseText: string
-  generator: string
   bpm: number
   firstBeatSeconds: number
   beats: number
@@ -43,7 +42,7 @@ function verifySha256(path: string, expected: string) {
   return bytes
 }
 
-test('ships exactly two local demos with verified rights, bounded size, and matching hashes', () => {
+test('ships exactly two local demos with documented CC0 provenance, bounded size, and matching hashes', () => {
   const manifestPath = resolve(demosRoot, 'manifest.json')
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as DemoManifestEntry[]
   expect(manifest).toHaveLength(2)
@@ -59,7 +58,6 @@ test('ships exactly two local demos with verified rights, bounded size, and matc
     expect(demo.source.length).toBeGreaterThan(0)
     expect(demo.license).toBe('CC0-1.0')
     expect(demo.licenseUrl).toBe('https://creativecommons.org/publicdomain/zero/1.0/')
-    expect(demo.generator).toBe('scripts/generate-demos.mjs')
     expect(demo.bpm).toBeGreaterThanOrEqual(60)
     expect(demo.bpm).toBeLessThanOrEqual(200)
     expect(demo.firstBeatSeconds).toBeGreaterThanOrEqual(0)

@@ -2,10 +2,7 @@
 
 > **Rhythm meets volume.** A minimalist, local-first browser DJ console for two-track mixing, creative transitions, and stereo recording with WAV and MP3 downloads.
 
-![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
-![React 19](https://img.shields.io/badge/React-19-61dafb.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg)
-![Vite](https://img.shields.io/badge/Vite-7-646cff.svg)
+[MIT license](LICENSE)
 
 ---
 
@@ -16,11 +13,11 @@
 ## Features
 
 - **Dual-Deck Console:** Independent decks supporting local MP3, WAV, and FLAC audio files.
-- **Audio Engine & DSP:** Real-time pitch shifting (via SoundTouch), vinyl scratch simulation, hot cues, beat loops, and beat jump.
+- **Audio Engine & DSP:** Real-time pitch shifting, vinyl scratch simulation, hot cues, beat loops, and beat jump.
 - **BPM & Key Analysis:** In-browser Web Worker rhythm and key estimation, with manual tap and tempo adjustment tools.
 - **Creative Transitions & FX:** Dedicated transition canvas (Air, Echo, Sweep), 3-band EQ, resonant filters, flanger, tremolo, and overdrive.
 - **Stereo Recording:** Real-time capture of the limiter-guarded master output with versioned downloads. Choose lossless WAV or MP3 at 320 kbps; MP3 conversion runs locally in a background worker.
-- **Responsive UI:** Dark and light themes, full keyboard navigation, and multi-touch support for touch screens.
+- **Responsive UI:** Dark and light themes, keyboard shortcuts, and multi-touch controls for touch screens.
 
 ## Getting Started
 
@@ -33,8 +30,8 @@
 
 1. Clone or download the repository:
    ```bash
-   git clone <repo-url>
-   cd "Rimvo 1.0.0"
+   git clone https://github.com/ardacankyaa/rimvo.git
+   cd rimvo
    ```
 
 2. Install dependencies:
@@ -46,9 +43,20 @@
    ```bash
    npm run dev
    ```
-   Open **http://localhost:5173** in a modern browser (Chrome, Edge, Firefox, or Safari).
+   Open **http://localhost:5173** in a modern browser.
 
 > **Windows Users:** You can also run `start.bat` directly to verify your environment, install dependencies, and launch the application.
+
+### Try your first mix
+
+Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, move the crossfader, and try the effects. Use the recording control to capture the master output, then stop and choose WAV or MP3 to download your mix. Loading tracks does not start playback automatically.
+
+### Current limits
+
+- Each track is limited to 8 minutes, 128 MiB of source data, and 192 MiB of decoded audio.
+- Recording stops at the earlier of 15 minutes or 128 MiB of captured PCM data. At 48 kHz this is about 11 minutes 39 seconds.
+- Tracks, analyses, and recordings belong to the current browser session. Download your recording before closing or refreshing the page.
+- BPM and key are estimates; use manual adjustments when needed. Browser and device support, memory, and audio hardware affect performance.
 
 ## Available Scripts
 
@@ -61,6 +69,8 @@
 | `npm test` | Runs the test suite with Vitest |
 | `npm run lint` | Lints source files with ESLint |
 | `npm run typecheck`| Validates TypeScript types across the codebase |
+
+The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), and the full test suite on pushes to `main` and pull requests. The audio tests include a long transport simulation and can take several minutes.
 
 ## Project Structure
 
@@ -88,10 +98,10 @@
 
 ## Privacy & Security
 
-RIMVO is strictly local-first. All audio decoding, analysis, mixing, and recording happen purely in memory within your browser session. No tracking, telemetry, or external network requests are made.
+RIMVO processes your audio in memory within your browser session and does not upload personal music or recordings. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry. An optional theme preference can be stored locally when enabled in the Cookies panel.
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).  
 Bundled demo tracks and artwork are dedicated to the public domain under [CC0 1.0 Universal](public/demo-tracks/LICENSE.txt).
-MP3 encoding uses the unmodified [@breezystack/lamejs](https://github.com/shijinyu/lamejs) package (LGPL-3.0), a JavaScript port of [LAME](https://lame.sourceforge.net/). See [third-party notices](public/THIRD-PARTY-NOTICES.txt).
+Dependencies and generic interface icons retain their own licenses and attribution. See the [distribution notices](public/THIRD_PARTY_LICENSES.txt), including the MP3 encoder's LGPL-3.0 notice. Dependency names, copyright notices, and compatibility identifiers identify technical components; the application's name and visual identity are RIMVO.

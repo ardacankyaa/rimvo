@@ -63,7 +63,7 @@ To the extent possible under law, the authors waive copyright and related rights
 CC0 1.0 Universal public-domain dedication: https://creativecommons.org/publicdomain/zero/1.0/
 Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
 
-Generator source: scripts/generate-demos.mjs
+This release includes the finished assets; the original synthesis generator is not included.
 Provenance, tempo, first beat, file hashes and measured sample properties: manifest.json
 
 Full per-track provenance/attribution/hashes: demo-tracks/manifest.json and demo-tracks/README.md.
@@ -100,4 +100,16 @@ Exact published packages (including original source/notice contents):
 https://registry.npmjs.org/@soundtouchjs/core/-/core-2.1.1.tgz
 https://registry.npmjs.org/@soundtouchjs/interpolation-strategy-lanczos/-/interpolation-strategy-lanczos-2.1.1.tgz
 No upstream code modifications. These packages retain MPL-2.0 independently of the project MIT license.
+
+MP3 EXPORT — LGPL-3.0
+
+MP3 export uses @breezystack/lamejs 1.2.7, unmodified.
+License: LGPL-3.0
+Source: https://github.com/shijinyu/lamejs
+Upstream: https://github.com/zhuker/lamejs
+LAME project: https://lame.sourceforge.net/
+License text: https://www.gnu.org/licenses/lgpl-3.0.html
+
+The application's MIT license does not replace this dependency's license.
+This notice is also available in THIRD-PARTY-NOTICES.txt.
 
