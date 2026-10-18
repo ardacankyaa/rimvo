@@ -4,7 +4,7 @@ import { MAX_RECORDING_BYTES, MAX_RECORDING_SECONDS } from './types';
 import type { CaptureMessage, RecordingSnapshot } from './types';
 
 const frameLimit = (sampleRate: number) => Math.min(Math.floor(sampleRate * MAX_RECORDING_SECONDS), Math.floor(MAX_RECORDING_BYTES / 4));
-const idleSnapshot = (): RecordingSnapshot => Object.freeze({ status: 'idle', durationSeconds: 0, maxDurationSeconds: frameLimit(48000) / 48000, sampleRate: null, bytes: 0, stopReason: null, error: null });
+const idleSnapshot = (revision = 0): RecordingSnapshot => Object.freeze({ revision, status: 'idle', durationSeconds: 0, maxDurationSeconds: frameLimit(48000) / 48000, sampleRate: null, bytes: 0, stopReason: null, error: null });
 
 /** One session-local take, tapped after the limiter. Never requests a microphone. */
 export class MixRecorder {
@@ -34,7 +34,7 @@ export class MixRecorder {
     const generation = ++this.generation;
     this.chunks = []; this.blob = null;
     const maxFrames = frameLimit(context.sampleRate);
-    this.publish({ status: 'preparing', durationSeconds: 0, sampleRate: context.sampleRate, maxDurationSeconds: maxFrames / context.sampleRate, bytes: 0, stopReason: null, error: null });
+    this.publish({ revision: generation, status: 'preparing', durationSeconds: 0, sampleRate: context.sampleRate, maxDurationSeconds: maxFrames / context.sampleRate, bytes: 0, stopReason: null, error: null });
     try {
       let loaded = this.modules.get(context);
       if (!loaded) {
@@ -103,7 +103,19 @@ export class MixRecorder {
   }
   clear(): void {
     if (['recording', 'preparing', 'stopping'].includes(this.snapshot.status)) throw new Error('Stop the recording before clearing it.');
-    this.chunks = []; this.blob = null; this.publish(idleSnapshot());
+    this.chunks = []; this.blob = null; this.publish(idleSnapshot(++this.generation));
+  }
+  async restore(wav: Blob): Promise<void> {
+    if (this.disposed || ['recording', 'preparing', 'stopping'].includes(this.snapshot.status)) throw new Error('Stop the recording before restoring a take.');
+    if (wav.size <= 44 || wav.size > MAX_RECORDING_BYTES + 44) throw new Error('The saved recording exceeds its safe memory limit.');
+    const view = new DataView(await wav.slice(0, 44).arrayBuffer());
+    const rate = view.getUint32(24, true), bytes = wav.size - 44;
+    if (view.getUint32(0) !== 0x52494646 || view.getUint32(8) !== 0x57415645 || view.getUint16(20, true) !== 1
+      || view.getUint16(22, true) !== 2 || view.getUint16(34, true) !== 16 || view.getUint32(36) !== 0x64617461
+      || view.getUint32(40, true) !== bytes || bytes % 4 || rate < 8000 || rate > 192000 || bytes / 4 > frameLimit(rate)) throw new Error('The saved recording is not a supported stereo WAV.');
+    if (this.disposed || ['recording', 'preparing', 'stopping'].includes(this.snapshot.status)) throw new Error('Recording changed while restoring the take.');
+    this.chunks = []; this.blob = wav;
+    this.publish({ revision: ++this.generation, status: 'ready', durationSeconds: bytes / (rate * 4), maxDurationSeconds: frameLimit(rate) / rate, sampleRate: rate, bytes, stopReason: 'manual', error: null });
   }
   interrupt(): void { void this.stop('interrupted'); }
   dispose(): void {

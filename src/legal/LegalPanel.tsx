@@ -1,10 +1,12 @@
+import { t, useLanguage } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
-import { legalTitles, policies, policyVersion, type LegalPage } from './policies';
+import { englishPolicies, legalTitles, policies, policyVersion, type LegalPage } from './policies';
 import { getRememberPreferences, setRememberPreferences } from './preference-storage';
 import './legal.css';
 import { BrandMark } from '../ui/BrandMark';
 export interface LegalPanelProps { readonly page: LegalPage; readonly onClose: () => void }
 export function LegalPanel({ page, onClose }: LegalPanelProps) {
+  const language = useLanguage();
   const dialog = useRef<HTMLDialogElement>(null);
   const [remember, setRemember] = useState(getRememberPreferences);
   const [storageError, setStorageError] = useState(false);
@@ -14,35 +16,35 @@ export function LegalPanel({ page, onClose }: LegalPanelProps) {
     node.showModal();
     return () => node.close();
   }, []);
-  return <dialog ref={dialog} className="legal-dialog" aria-labelledby="legal-title" lang="tr"
+  return <dialog ref={dialog} className="legal-dialog" aria-labelledby="legal-title" lang={language}
     onCancel={event => { event.preventDefault(); onClose(); }}
     onClick={event => { if (event.target === event.currentTarget) {
       const bounds = event.currentTarget.getBoundingClientRect();
       if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
     } }}>
     <header className="legal-dialog__header">
-      <div><span className="brand-caption"><BrandMark />RIMVO</span><h2 id="legal-title">{legalTitles[page]}</h2></div>
-      <button type="button" aria-label="Kapat" onClick={onClose} autoFocus>×</button>
+      <div><span className="brand-caption"><BrandMark />{t("RIMVO")}</span><h2 id="legal-title">{t(legalTitles[page])}</h2></div>
+      <button type="button" aria-label={t("Kapat")} onClick={onClose} autoFocus>×</button>
     </header>
-    <div className="legal-dialog__body" tabIndex={0} aria-label={legalTitles[page] + ' metni'}>
-      <p className="legal-dialog__date">Yerel açık kaynak sürüm · {policyVersion}</p>
-      {policies[page].map(section => <section key={section.heading}>
-        <h3>{section.heading}</h3>
-        {section.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+    <div className="legal-dialog__body" tabIndex={0} aria-label={t(legalTitles[page]) + (language === 'tr' ? ' metni' : ' text')}>
+      <p className="legal-dialog__date">{t("Yerel açık kaynak sürüm ·")}{t(policyVersion)}</p>
+      {(language === 'tr' ? policies : englishPolicies)[page].map(section => <section key={section.heading}>
+        <h3>{t(section.heading)}</h3>
+        {section.paragraphs.map(paragraph => <p key={paragraph}>{t(paragraph)}</p>)}
       </section>)}
       {page === 'cookies' && <fieldset className="legal-dialog__preference">
-        <legend>Tema tercihi</legend>
+        <legend>{t("Tema tercihi")}</legend>
         <label><input type="checkbox" checked={remember} onChange={event => {
           const requested = event.target.checked;
           const enabled = setRememberPreferences(requested, document.body.dataset.theme === 'light' ? 'light' : 'dark');
           setRemember(enabled); setStorageError(requested && !enabled);
-        }} />Tema tercihimi bu cihazda hatırla</label>
-        <p>İsteğe bağlı · 180 gün · İstediğin zaman kapatabilirsin.</p>
-        {storageError && <p role="status">Tarayıcı bu tercihin saklanmasına izin vermedi. RIMVO’yu kullanmaya devam edebilirsin.</p>}
+        }} />{t("Tema tercihimi bu cihazda hatırla")}</label>
+        <p>{t("İsteğe bağlı · 180 gün · İstediğin zaman kapatabilirsin.")}</p>
+        {storageError && <p role="status">{t("Tarayıcı bu tercihin saklanmasına izin vermedi. RIMVO’yu kullanmaya devam edebilirsin.")}</p>}
       </fieldset>}
       {page === 'terms' && <p className="legal-dialog__licenses">
-        <a href={import.meta.env.BASE_URL + 'THIRD_PARTY_LICENSES.txt'} target="_blank" rel="noopener noreferrer">Üçüncü taraf lisansları (yeni sekme)</a>
-        <a href={import.meta.env.BASE_URL + 'demo-tracks/LICENSE.txt'} target="_blank" rel="noopener noreferrer">Örnek parça lisansı (yeni sekme)</a>
+        <a href={import.meta.env.BASE_URL + 'THIRD_PARTY_LICENSES.txt'} target="_blank" rel="noopener noreferrer">{t("Üçüncü taraf lisansları (yeni sekme)")}</a>
+        <a href={import.meta.env.BASE_URL + 'demo-tracks/LICENSE.txt'} target="_blank" rel="noopener noreferrer">{t("Örnek parça lisansı (yeni sekme)")}</a>
       </p>}
     </div>
   </dialog>;

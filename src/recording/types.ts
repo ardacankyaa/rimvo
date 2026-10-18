@@ -1,6 +1,8 @@
 export type RecordingFormat = 'wav' | 'mp3';
 
 export interface RecordingSnapshot {
+  /** Changes whenever a take is started, cleared, or restored. */
+  readonly revision: number;
   readonly status: 'idle' | 'preparing' | 'recording' | 'stopping' | 'ready' | 'error';
   readonly durationSeconds: number;
   readonly maxDurationSeconds: number;

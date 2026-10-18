@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { DeckId } from '../../audio/types';
 import { FxHoldControl, fxLabels, type DeckFx, type FxWrite, type FxType } from './FxPads';
@@ -65,17 +66,17 @@ export function FxPerformance({id,value,loaded,onChange}: {id:DeckId;value:DeckF
     const y=Math.max(0,Math.min(1,1-(event.clientY-gesture.rect.top)/gesture.rect.height));
     write(true,x,y);
   }
-  return <section className="fx-performance" aria-label={'Performance effects '+id}>
-    <div className="fx-picker" role="group" aria-label={'Choose effect '+id}>{effects.map(type=><button key={type} type="button" aria-pressed={selected===type} aria-label={'Select '+fxLabels[type]+' '+id} title={effectHints[type]} onClick={()=>{finish();setSelected(type);}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={shapes[type]} /></svg><span>{fxLabels[type]}</span><small>{effectFeels[type]}</small><i className={value[type].enabled?'is-on':''} /></button>)}</div>
-    <div ref={pad} className={'fx-surface'+(setting.enabled?' is-performing':'')} role="group" tabIndex={-1} aria-label={fxLabels[selected]+' gesture pad '+id} aria-disabled={!loaded}
+  return <section className="fx-performance" aria-label={t('Performance effects '+id)}>
+    <div className="fx-picker" role="group" aria-label={t('Choose effect '+id)}>{effects.map(type=><button key={type} type="button" aria-pressed={selected===type} aria-label={t('Select '+fxLabels[type]+' '+id)} title={t(effectHints[type])} onClick={()=>{finish();setSelected(type);}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={shapes[type]} /></svg><span>{t(fxLabels[type])}</span><small>{t(effectFeels[type])}</small><i className={value[type].enabled?'is-on':''} /></button>)}</div>
+    <div ref={pad} className={'fx-surface'+(setting.enabled?' is-performing':'')} role="group" tabIndex={-1} aria-label={t(fxLabels[selected]+' gesture pad '+id)} aria-disabled={!loaded}
       style={{'--fx-x':amount*100+'%','--fx-y':(1-variation)*100+'%'} as React.CSSProperties}
       onPointerDown={event=>{if(!loaded||event.button!==0||active.current)return;event.preventDefault();event.currentTarget.focus({preventScroll:true});try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* Central blur cleanup remains available. */}active.current={pointerId:event.pointerId,rect:event.currentTarget.getBoundingClientRect(),unregister:registerGesture(finish)};beginFx();move(event);}}
       onPointerMove={move} onPointerUp={event=>finish(event.pointerId)} onPointerCancel={event=>finish(event.pointerId)} onLostPointerCapture={event=>finish(event.pointerId)} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();finish();}}}>
       <svg className="fx-response" viewBox="0 0 240 70" aria-hidden="true"><path d={responsePath(selected,amount,variation)} /></svg>
-      <i className="fx-cursor" /><span className="fx-surface__hint">{setting.enabled?fxLabels[selected]+' · Live':'Hold & move · '+effectFeels[selected]}</span>
+      <i className="fx-cursor" /><span className="fx-surface__hint">{t(setting.enabled?fxLabels[selected]+' · Live':'Hold & move · '+effectFeels[selected])}</span>
     </div>
-    <div className="fx-near-controls"><label>Amount<input aria-label={'FX amount '+id} type="range" min="0" max="1" step="0.01" value={amount} disabled={!loaded} onChange={event=>adjust(Number(event.currentTarget.value))} /></label>
-      {selected!=='drive'&&selected!=='reverb'&&<label>{selected==='delay'?'Feedback':'Speed'}<input aria-label={'FX variation '+id} type="range" min="0" max="1" step="0.01" value={variation} disabled={!loaded} onChange={event=>adjust(undefined,Number(event.currentTarget.value))} /></label>}
+    <div className="fx-near-controls"><label>{t("Amount")}<input aria-label={t('FX amount '+id)} type="range" min="0" max="1" step="0.01" value={amount} disabled={!loaded} onChange={event=>adjust(Number(event.currentTarget.value))} /></label>
+      {selected!=='drive'&&selected!=='reverb'&&<label>{t(selected==='delay'?'Feedback':'Speed')}<input aria-label={t('FX variation '+id)} type="range" min="0" max="1" step="0.01" value={variation} disabled={!loaded} onChange={event=>adjust(undefined,Number(event.currentTarget.value))} /></label>}
     </div>
     <FxHoldControl key={selected} id={id} type={selected} enabled={setting.enabled} loaded={loaded} latched={permanentFxEnabled(engine,id,selected)} onLatch={next=>{finish();finishFx();write(next);}} onHoldStart={beginFx} onHoldEnd={finishFx} />
   </section>;

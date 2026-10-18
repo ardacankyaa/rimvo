@@ -28,3 +28,7 @@ desktop.ini
 # Test coverage
 coverage/
 *.tsbuildinfo
+
+# Browser test artifacts
+test-results/
+playwright-report/

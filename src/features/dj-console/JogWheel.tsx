@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useLayoutEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { DeckId } from '../../audio/types';
 import { engine, getSnapshot } from '../../state/engine';
@@ -181,9 +182,9 @@ export function JogWheel({ id, durationSeconds, revision, disabled = false, onEr
   const currentPosition = disabled ? 0 : engine.readPosition(id).positionSeconds;
   const safePosition = Number.isFinite(currentPosition) ? clamp(currentPosition, 0, Math.max(0, durationSeconds)) : 0;
   return <div className="jog-unit">
-    <span id={'jog-help-' + id} className="jog-unit__label">Turn the rim or drag the centre horizontally or vertically to scratch. Use arrow keys to seek.</span>
+    <span id={'jog-help-' + id} className="jog-unit__label">{t("Turn the rim or drag the centre horizontally or vertically to scratch. Use arrow keys to seek.")}</span>
     <div ref={node} className={'jog-wheel' + (disabled ? ' is-disabled' : '')} role="slider" tabIndex={disabled ? -1 : 0}
-      aria-label={'Jog ' + id} aria-describedby={'jog-help-' + id} aria-valuemin={0} aria-valuemax={Math.max(0.01, durationSeconds)} aria-valuenow={safePosition} aria-valuetext={formatMediaTime(safePosition)}
+      aria-label={t('Jog ' + id)} aria-describedby={'jog-help-' + id} aria-valuemin={0} aria-valuemax={Math.max(0.01, durationSeconds)} aria-valuenow={safePosition} aria-valuetext={formatMediaTime(safePosition)}
       aria-orientation="vertical" aria-disabled={disabled} onPointerDown={begin} onPointerMove={move}
       onPointerUp={event => finish(event.pointerId)} onPointerCancel={event => finish(event.pointerId)} onLostPointerCapture={event => finish(event.pointerId)}
       onKeyDown={onKeyDown}>

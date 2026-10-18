@@ -1,4 +1,5 @@
 import { analyzeWaveformInWorker } from '../analysis/waveform-client';
+import { createHeadphoneMonitor } from './headphone-monitor';
 import { clampFinite } from '../dsp/curves';
 import { inspectAudioBlob, safeTrackName } from './admission';
 import type { AudioFileDescriptor } from './admission';
@@ -173,6 +174,7 @@ async function decodePreparedFile(
 }
 
 export class BrowserAudioEngine implements AudioEngine {
+  private headphoneMonitor: ReturnType<typeof createHeadphoneMonitor> | null = null;
   private readonly recorder = new MixRecorder();
   private readonly options: Required<AudioEngineOptions>;
   private readonly decks: Record<DeckId, DeckState> = { A: makeDeck('A'), B: makeDeck('B') };
@@ -235,6 +237,14 @@ export class BrowserAudioEngine implements AudioEngine {
   subscribeRecording(listener: () => void) { return this.recorder.subscribe(listener); }
   exportRecording(): Blob { return this.recorder.export(); }
   clearRecording(): void { this.assertNotDisposed(); this.recorder.clear(); }
+  restoreRecording(wav: Blob) { this.assertNotDisposed(); return this.recorder.restore(wav); }
+  getHeadphoneStream(): MediaStream {
+    this.assertNotDisposed(); this.assertRunning();
+    this.headphoneMonitor ??= createHeadphoneMonitor(this.context!, { A: this.graph!.decks.A.output, B: this.graph!.decks.B.output });
+    return this.headphoneMonitor.stream;
+  }
+  setHeadphoneCue(id: DeckId, enabled: boolean): void { this.getHeadphoneStream(); this.headphoneMonitor!.select(id, enabled); }
+  stopHeadphoneMonitoring(): void { this.headphoneMonitor?.dispose(); this.headphoneMonitor = null; }
 
   initializeFromGesture(): Promise<EngineCapabilities> {
     this.assertNotDisposed();
@@ -758,12 +768,15 @@ export class BrowserAudioEngine implements AudioEngine {
     return this.sendCommand(id,'nudge-hold',{deltaPercent:0});
   }
 
-  setBeatGrid(id: DeckId, grid: { readonly bpm: number; readonly firstBeatSeconds: number }): void {
+  setBeatGrid(id: DeckId, grid: { readonly bpm: number; readonly firstBeatSeconds: number }, provenance?: Pick<NonNullable<DeckSnapshot['beatGrid']>, 'source' | 'confidence'>): void {
     const deck = this.requireTrack(id);
     const bpm = this.strictFinite(grid.bpm, 30, 300, 'Beat-grid BPM');
     const firstBeatSeconds = this.strictFinite(grid.firstBeatSeconds, 0, deck.track!.durationSeconds, 'First beat');
     if (firstBeatSeconds >= deck.track!.durationSeconds) throw this.error('invalid-value', 'First beat must occur before the end of the track.', 'transport');
-    const next = Object.freeze({ bpm, firstBeatSeconds, confidence: 1, source: 'manual' as const });
+    const confidence = provenance ? this.strictFinite(provenance.confidence, 0, 1, 'Beat-grid confidence') : 1;
+    const source = provenance?.source ?? 'manual';
+    if (!['auto', 'manual', 'tap'].includes(source)) throw this.error('invalid-value', 'Invalid beat-grid source.', 'transport');
+    const next = Object.freeze({ bpm, firstBeatSeconds, confidence, source });
     deck.beatGrid = next;
     this.sendBeatGridToProcessor(id);
     this.updateEffectiveBpm(id);
@@ -1105,6 +1118,7 @@ export class BrowserAudioEngine implements AudioEngine {
     if (this.disposePromise) return this.disposePromise;
     this.disposed = true;
     this.recorder.dispose();
+    this.stopHeadphoneMonitoring();
     for(const controller of this.fileAnalysisControllers)controller.abort();
     const disposedError = this.error('disposed', 'The audio engine has been disposed.', 'engine');
     for (const id of DECK_IDS) {
@@ -1743,6 +1757,7 @@ export class BrowserAudioEngine implements AudioEngine {
   private onContextStateChange = (): void => {
     if (this.context?.state !== 'running') this.recorder.interrupt();
     if (this.context?.state === 'closed') {
+      this.stopHeadphoneMonitoring();
       for(const controller of this.fileAnalysisControllers)controller.abort();
       for(const id of DECK_IDS)this.decks[id].nudgePercent=0;
       this.cancelAllCuePreviews();
@@ -1757,6 +1772,7 @@ export class BrowserAudioEngine implements AudioEngine {
   };
 
   private failProcessor(message: string): void {
+    this.stopHeadphoneMonitoring();
     this.recorder.interrupt();
     for(const controller of this.fileAnalysisControllers)controller.abort();
     this.fault = this.error('processor-error', message, 'transport');

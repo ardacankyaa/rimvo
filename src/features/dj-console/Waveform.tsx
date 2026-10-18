@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { DeckId, LoopRegion, WaveformData, WaveformLevel } from '../../audio/types';
 import { engine, getSnapshot } from '../../state/engine';
@@ -280,20 +281,20 @@ export function Waveform({ id, revision, waveform, durationSeconds, accent, disa
   }
 
   return <div className={'waveform waveform-' + id}>
-    <span className="waveform__identity" aria-hidden="true">{id}</span>
+    <span className="waveform__identity" aria-hidden="true">{t(id)}</span>
     <div className="waveform__surface">
       <canvas ref={canvas} aria-hidden="true" />
       <input ref={seek} className="waveform__seek" type="range" min="0" max={Math.max(0.01, durationSeconds)} step="0.001" defaultValue="0" disabled={disabled}
-        aria-label={'Seek ' + id} onChange={commitSeek} onPointerDown={beginPointerSeek}
+        aria-label={t('Seek ' + id)} onChange={commitSeek} onPointerDown={beginPointerSeek}
         onPointerUp={event => finishSeeking(event.pointerId)} onPointerCancel={event => finishSeeking(event.pointerId)} onLostPointerCapture={event => finishSeeking(event.pointerId)}
         onKeyDown={event => { if (event.key.startsWith('Arrow') || event.key.startsWith('Page') || event.key === 'Home' || event.key === 'End') beginKeyboardSeek(); }}
         onKeyUp={() => finishSeeking()} onBlur={() => { if (seekPointer.current === null) finishSeeking(); }} />
     </div>
-    <div className="waveform__readout"><span className="visually-hidden">Position {id}</span><span className="waveform__time"><output ref={clock} aria-live="off">-{formatMediaTime(durationSeconds).replace(/\.\d+$/, '')}</output><small>{formatMediaTime(durationSeconds).replace(/\.\d+$/, '')}</small></span>
-      <span className="waveform__bpm">{effectiveBpm ? effectiveBpm.toFixed(1) : '—'}<small>BPM</small></span>
-      {showZoom && <div className="waveform__zoom" role="group" aria-label={'Waveform zoom ' + id}>
-        {([1, 2, 4] as const).map(value => <button key={value} type="button" aria-label={value + '× · Waveform zoom ' + value + 'x ' + id} aria-pressed={zoomLevel === value} disabled={!waveform}
-          onClick={() => setZoomValue(value)}>{value}×</button>)}
+    <div className="waveform__readout"><span className="visually-hidden">{t("Position")}{t(id)}</span><span className="waveform__time"><output ref={clock} aria-live="off">-{t(formatMediaTime(durationSeconds).replace(/\.\d+$/, ''))}</output><small>{t(formatMediaTime(durationSeconds).replace(/\.\d+$/, ''))}</small></span>
+      <span className="waveform__bpm">{t(effectiveBpm ? effectiveBpm.toFixed(1) : '—')}<small>{t("BPM")}</small></span>
+      {showZoom && <div className="waveform__zoom" role="group" aria-label={t('Waveform zoom ' + id)}>
+        {([1, 2, 4] as const).map(value => <button key={value} type="button" aria-label={t(value + '× · Waveform zoom ' + value + 'x ' + id)} aria-pressed={zoomLevel === value} disabled={!waveform}
+          onClick={() => setZoomValue(value)}>{t(value)}×</button>)}
       </div>}
     </div>
   </div>;

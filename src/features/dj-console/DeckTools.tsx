@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { DeckId, DeckSnapshot, HotCueIndex } from '../../audio/types';
 import { engine, getSnapshot } from '../../state/engine';
@@ -47,10 +48,10 @@ function ManualLoopControls({ id, loaded, durationSeconds, loop, loopBeats, runF
   const [loopStart, setLoopStart] = useState(0);
   const [loopEnd, setLoopEnd] = useState(Math.min(1, durationSeconds));
   return <div className="manual-loop">
-    <label>Loop start {id}<input type="number" disabled={!loaded} name={'loop-start-' + id} autoComplete="off" min="0" max={durationSeconds || 0} step="0.01" value={loopStart} onChange={event => setLoopStart(Number(event.currentTarget.value))} /></label>
-    <label>Loop end {id}<input type="number" disabled={!loaded} name={'loop-end-' + id} autoComplete="off" min="0" max={durationSeconds || 0} step="0.01" value={loopEnd} onChange={event => setLoopEnd(Number(event.currentTarget.value))} /></label>
-    <label className="manual-loop__toggle"><input type="checkbox" aria-label={'Enable loop ' + id} checked={loop !== null && loopBeats === null} disabled={!loaded}
-      onChange={event => runForTrack(() => engine.setLoop(id, event.currentTarget.checked ? { startSeconds: loopStart, endSeconds: loopEnd } : null))} />Enable loop</label>
+    <label>{t("Loop start ")}{t(id)}<input type="number" disabled={!loaded} name={'loop-start-' + id} autoComplete="off" min="0" max={durationSeconds || 0} step="0.01" value={loopStart} onChange={event => setLoopStart(Number(event.currentTarget.value))} /></label>
+    <label>{t("Loop end ")}{t(id)}<input type="number" disabled={!loaded} name={'loop-end-' + id} autoComplete="off" min="0" max={durationSeconds || 0} step="0.01" value={loopEnd} onChange={event => setLoopEnd(Number(event.currentTarget.value))} /></label>
+    <label className="manual-loop__toggle"><input type="checkbox" aria-label={t('Enable loop ' + id)} checked={loop !== null && loopBeats === null} disabled={!loaded}
+      onChange={event => runForTrack(() => engine.setLoop(id, event.currentTarget.checked ? { startSeconds: loopStart, endSeconds: loopEnd } : null))} />{t("Enable loop")}</label>
   </div>;
 }
 
@@ -89,24 +90,24 @@ function DeckToolsContent({ id, deck, run, onUnloadDeck, onOpenBpm, tab, view, z
 
   return <div className="deck-tools__panels">
     <section id={'deck-tools-' + id + '-panel-loop'} className="deck-tools__panel deck-tools__panel--loop" role="tabpanel" aria-labelledby={'deck-tools-' + id + '-tab-loop'} tabIndex={0} hidden={tab !== 'loop'}>
-      <div className="performance-group" aria-label={'Loop and beat jump ' + id}>
-        <div className="performance-group__heading"><h3>Loop / jump</h3>
-          <ToggleButton aria-label={'Quantize ' + id} pressed={deck.quantize} disabled={!loaded||!deck.beatGrid||(deck.beatGrid.source==='auto'&&deck.beatGrid.confidence<.75)} title="Quantize needs confirmed beat alignment; estimated BPM loops start here" onClick={() => runForTrack(() => engine.setQuantize(id, !deck.quantize))}>Quantize</ToggleButton>
+      <div className="performance-group" aria-label={t('Loop and beat jump ' + id)}>
+        <div className="performance-group__heading"><h3>{t("Loop / jump")}</h3>
+          <ToggleButton aria-label={t('Quantize ' + id)} pressed={deck.quantize} disabled={!loaded||!deck.beatGrid||(deck.beatGrid.source==='auto'&&deck.beatGrid.confidence<.75)} title={t("Quantize needs confirmed beat alignment; estimated BPM loops start here")} onClick={() => runForTrack(() => engine.setQuantize(id, !deck.quantize))}>{t("Quantize")}</ToggleButton>
         </div>
-        {loaded && !beatControlsAvailable && view !== 'Manual' && <div className="loop-tempo-required"><span>Set BPM for beat loops / jump.</span><button type="button" aria-label={'Set BPM for loop and jump ' + id} onClick={() => onOpenBpm(id)}>Set BPM</button></div>}
-        <div className="loop-pad-grid">{loopOptions.map(option => <ToggleButton key={option.value} className="loop-pad" aria-label={'Loop ' + option.name + ' ' + id} pressed={deck.loopBeats === option.value} disabled={!loaded || (!beatControlsAvailable && deck.loopBeats !== option.value)}
-          onClick={() => runForTrack(() => deck.loopBeats === option.value ? engine.setLoop(id, null) : engine.setBeatLoop(id, option.value))}>{option.name}</ToggleButton>)}</div>
-        <div className="beat-jump-row"><button type="button" aria-label={'−1 beat · Beat jump back 1 beat ' + id} disabled={!beatControlsAvailable} onClick={() => runForTrack(() => engine.beatJump(id, -1))}>−1 beat</button>
-          <button type="button" aria-label={'+1 beat · Beat jump forward 1 beat ' + id} disabled={!beatControlsAvailable} onClick={() => runForTrack(() => engine.beatJump(id, 1))}>+1 beat</button></div>
+        {loaded && !beatControlsAvailable && view !== 'Manual' && <div className="loop-tempo-required"><span>{t("Set BPM for beat loops / jump.")}</span><button type="button" aria-label={t('Set BPM for loop and jump ' + id)} onClick={() => onOpenBpm(id)}>{t("Set BPM")}</button></div>}
+        <div className="loop-pad-grid">{loopOptions.map(option => <ToggleButton key={option.value} className="loop-pad" aria-label={t('Loop ' + option.name + ' ' + id)} pressed={deck.loopBeats === option.value} disabled={!loaded || (!beatControlsAvailable && deck.loopBeats !== option.value)}
+          onClick={() => runForTrack(() => deck.loopBeats === option.value ? engine.setLoop(id, null) : engine.setBeatLoop(id, option.value))}>{t(option.name)}</ToggleButton>)}</div>
+        <div className="beat-jump-row"><button type="button" aria-label={t('−1 beat · Beat jump back 1 beat ' + id)} disabled={!beatControlsAvailable} onClick={() => runForTrack(() => engine.beatJump(id, -1))}>{t("−1 beat")}</button>
+          <button type="button" aria-label={t('+1 beat · Beat jump forward 1 beat ' + id)} disabled={!beatControlsAvailable} onClick={() => runForTrack(() => engine.beatJump(id, 1))}>{t("+1 beat")}</button></div>
         <ManualLoopControls key={trackRevision ?? -1} id={id} loaded={loaded} durationSeconds={deck.durationSeconds} loop={deck.loop} loopBeats={deck.loopBeats} runForTrack={runForTrack} />
       </div>
     </section>
 
     <section id={'deck-tools-' + id + '-panel-cues'} className="deck-tools__panel deck-tools__panel--cues" role="tabpanel" aria-labelledby={'deck-tools-' + id + '-tab-cues'} tabIndex={0} hidden={tab !== 'cues'}>
-      <div className="performance-group hot-cue-group" aria-label={'Hot cues ' + id}>
-        <div className="performance-group__heading"><h3>Hot cues</h3><span>8 slots</span></div>
-        <div className="cue-point-tools"><span>Set cue point · {formatMediaTime(deck.cueSeconds)}</span>
-          <button type="button" className="set-cue" aria-label={'Set cue point ' + id} disabled={!loaded} onClick={() => runForTrack(() => engine.setCuePoint(id))}>Set cue</button>
+      <div className="performance-group hot-cue-group" aria-label={t('Hot cues ' + id)}>
+        <div className="performance-group__heading"><h3>{t("Hot cues")}</h3><span>{t("8 slots")}</span></div>
+        <div className="cue-point-tools"><span>{t("Set cue point ·")}{t(formatMediaTime(deck.cueSeconds))}</span>
+          <button type="button" className="set-cue" aria-label={t('Set cue point ' + id)} disabled={!loaded} onClick={() => runForTrack(() => engine.setCuePoint(id))}>{t("Set cue")}</button>
         </div>
         <HotCueGrid id={id} slots={deck.hotCues} loaded={loaded} onSet={selectCue}
           onTrigger={index => { if (isCurrentTrack()) return run(() => engine.triggerHotCue(id, index)); }}
@@ -116,15 +117,15 @@ function DeckToolsContent({ id, deck, run, onUnloadDeck, onOpenBpm, tab, view, z
 
     <section id={'deck-tools-' + id + '-panel-grid'} className="deck-tools__panel deck-tools__panel--grid" role="tabpanel" aria-labelledby={'deck-tools-' + id + '-tab-grid'} tabIndex={0} hidden={tab !== 'grid'}>
       <div className="grid-tools__editor">
-        <div className="bpm-readout"><span>Beat grid</span><strong>{bpm?.toFixed(1) ?? '—'}<small> BPM</small></strong><small className="bpm-readout__confidence">{gridSourceText}</small></div>
+        <div className="bpm-readout"><span>{t("Beat grid")}</span><strong>{t(bpm?.toFixed(1) ?? '—')}<small> {t("BPM")}</small></strong><small className="bpm-readout__confidence">{t(gridSourceText)}</small></div>
         <div className="grid-tools__buttons">
-          <button type="button" aria-label={'Open track BPM ' + id} disabled={!loaded} onClick={() => onOpenBpm(id)}>Track BPM</button>
+          <button type="button" aria-label={t('Open track BPM ' + id)} disabled={!loaded} onClick={() => onOpenBpm(id)}>{t("Track BPM")}</button>
         </div>
-        <div className="grid-tools__alternatives">{deck.bpmAnalysis.candidates.filter(candidate => candidate.bpm >= 30 && candidate.bpm <= 300).slice(0, 3).map((candidate, index) => <button type="button" key={candidate.bpm + '-' + index} aria-label={'Use ' + candidate.bpm.toFixed(1) + ' BPM grid ' + id}
-            title={'Use this beat estimate (' + Math.round(candidate.confidence * 100) + '% confidence)'} disabled={!loaded}
-            onClick={() => runForTrack(() => engine.setBeatGrid(id, { bpm: candidate.bpm, firstBeatSeconds: candidate.firstBeatSeconds }))}>{candidate.bpm.toFixed(1)}</button>)}
+        <div className="grid-tools__alternatives">{deck.bpmAnalysis.candidates.filter(candidate => candidate.bpm >= 30 && candidate.bpm <= 300).slice(0, 3).map((candidate, index) => <button type="button" key={candidate.bpm + '-' + index} aria-label={t('Use ' + candidate.bpm.toFixed(1) + ' BPM grid ' + id)}
+            title={t('Use this beat estimate (' + Math.round(candidate.confidence * 100) + '% confidence)')} disabled={!loaded}
+            onClick={() => runForTrack(() => engine.setBeatGrid(id, { bpm: candidate.bpm, firstBeatSeconds: candidate.firstBeatSeconds }))}>{t(candidate.bpm.toFixed(1))}</button>)}
         </div>
-        {deck.beatGrid && <LinearControl className="grid-offset" label={'Beat grid offset ' + id} value={deck.beatGrid.firstBeatSeconds} min={0} max={Math.max(0.01, deck.durationSeconds)} step={0.001} disabled={!loaded}
+        {deck.beatGrid && <LinearControl className="grid-offset" label={t('Beat grid offset ' + id)} value={deck.beatGrid.firstBeatSeconds} min={0} max={Math.max(0.01, deck.durationSeconds)} step={0.001} disabled={!loaded}
           valueText={number => formatMediaTime(number)} onChange={setGridOffset} />}
       </div>
     </section>
@@ -134,23 +135,23 @@ function DeckToolsContent({ id, deck, run, onUnloadDeck, onOpenBpm, tab, view, z
     </section>
 
     <section id={'deck-tools-' + id + '-panel-waveform'} className="deck-tools__panel deck-tools__panel--waveform" role="tabpanel" aria-labelledby={'deck-tools-' + id + '-tab-waveform'} tabIndex={0} hidden={tab !== 'waveform'}>
-      <div className="waveform-tools" role="group" aria-label={'Waveform zoom ' + id}>
-        <h3>Waveform zoom</h3>
-        {([1, 2, 4] as const).map(value => <ToggleButton key={value} aria-label={value + '× · Waveform zoom ' + value + 'x ' + id} pressed={zoomLevel === value} disabled={!loaded}
-          onClick={() => onZoomChange(value)}>{value}×</ToggleButton>)}
+      <div className="waveform-tools" role="group" aria-label={t('Waveform zoom ' + id)}>
+        <h3>{t("Waveform zoom")}</h3>
+        {([1, 2, 4] as const).map(value => <ToggleButton key={value} aria-label={t(value + '× · Waveform zoom ' + value + 'x ' + id)} pressed={zoomLevel === value} disabled={!loaded}
+          onClick={() => onZoomChange(value)}>{t(value)}×</ToggleButton>)}
       </div>
     </section>
 
     <section id={'deck-tools-' + id + '-panel-track'} className="deck-tools__panel deck-tools__panel--track" role="tabpanel" aria-labelledby={'deck-tools-' + id + '-tab-track'} tabIndex={0} hidden={tab !== 'track'}>
       <div className="track-tools">
-        <div><h3>Track</h3><p>{deck.track?.name ?? 'No track loaded'}</p>
-          {deck.track && <p>{deck.track.format.toUpperCase()} · {formatMediaTime(deck.durationSeconds)}</p>}
+        <div><h3>{t("Track")}</h3><p>{deck.track?.name ?? 'No track loaded'}</p>
+          {deck.track && <p>{t(deck.track.format.toUpperCase())} · {t(formatMediaTime(deck.durationSeconds))}</p>}
         </div>
-        <div className="track-tools__tempo" role="group" aria-label={'Tempo adjustment ' + id}>
-          <span>Tempo {deck.tempoPercent > 0 ? '+' : ''}{deck.tempoPercent.toFixed(1)}%</span>
-          <button type="button" aria-label={'Open track BPM ' + id} disabled={!loaded} onClick={() => onOpenBpm(id)}>Track BPM</button>
+        <div className="track-tools__tempo" role="group" aria-label={t('Tempo adjustment ' + id)}>
+          <span>{t("Tempo")}{t(deck.tempoPercent > 0 ? '+' : '')}{t(deck.tempoPercent.toFixed(1))}%</span>
+          <button type="button" aria-label={t('Open track BPM ' + id)} disabled={!loaded} onClick={() => onOpenBpm(id)}>{t("Track BPM")}</button>
         </div>
-        {loaded && <button type="button" className="deck-unload" aria-label={'Unload track ' + id} onClick={() => runForTrack(() => onUnloadDeck(id))}>Unload track</button>}
+        {loaded && <button type="button" className="deck-unload" aria-label={t('Unload track ' + id)} onClick={() => runForTrack(() => onUnloadDeck(id))}>{t("Unload track")}</button>}
       </div>
     </section>
   </div>;
@@ -183,16 +184,16 @@ export function DeckTools(props: DeckToolsProps) {
     }
   }
 
-  return <section className="deck-tools" aria-label={'Tools ' + id} data-view={selectedViews[tab].toLowerCase()}>
-    <div className="deck-tools__tabs" role="tablist" aria-label={'Deck ' + id + ' tools'}>
+  return <section className="deck-tools" aria-label={t('Tools ' + id)} data-view={selectedViews[tab].toLowerCase()}>
+    <div className="deck-tools__tabs" role="tablist" aria-label={t('Deck ' + id + ' tools')}>
       {tabs.map((item, index) => <button ref={element => { tabButtons.current[index] = element; }} key={item.id} type="button" role="tab"
         id={'deck-tools-' + id + '-tab-' + item.id} aria-controls={'deck-tools-' + id + '-panel-' + item.id} aria-selected={tab === item.id}
         tabIndex={tab === item.id ? 0 : -1} className={'deck-tools__tab' + (tab === item.id ? ' is-active' : '')}
-        onClick={() => selectTab(item.id)} onKeyDown={handleTabKeyDown}>{item.label}</button>)}
+        onClick={() => selectTab(item.id)} onKeyDown={handleTabKeyDown}>{t(item.label)}</button>)}
     </div>
-    {tab==='loop'?<div className="tool-view-selector loop-view-switch" role="group" aria-label={'Loop controls '+id}>{views.loop.map(view=><button type="button" key={view} aria-label={view+' loop view '+id} aria-pressed={selectedViews.loop===view} onClick={()=>{cancelAllGestures();setSelectedViews(current=>({...current,loop:view}));}}>{view==='Beat'?'Loop length':view==='Jump'?'Beat jump':'Custom loop'}</button>)}</div>:views[tab].length>1?<label className="tool-view-selector"><span className="visually-hidden">{tab} view {id}</span>
-      <select aria-label={tab+' view '+id} value={selectedViews[tab]} onChange={event=>{const next=event.currentTarget.value;cancelAllGestures();setSelectedViews(current=>({...current,[tab]:next}));}}>
-        {views[tab].map(view=><option key={view}>{view}</option>)}
+    {tab==='loop'?<div className="tool-view-selector loop-view-switch" role="group" aria-label={t('Loop controls '+id)}>{views.loop.map(view=><button type="button" key={view} aria-label={t(view+' loop view '+id)} aria-pressed={selectedViews.loop===view} onClick={()=>{cancelAllGestures();setSelectedViews(current=>({...current,loop:view}));}}>{t(view==='Beat'?'Loop length':view==='Jump'?'Beat jump':'Custom loop')}</button>)}</div>:views[tab].length>1?<label className="tool-view-selector"><span className="visually-hidden">{t(tab)} {t("view")}{t(id)}</span>
+      <select aria-label={t(tab+' view '+id)} value={selectedViews[tab]} onChange={event=>{const next=event.currentTarget.value;cancelAllGestures();setSelectedViews(current=>({...current,[tab]:next}));}}>
+        {views[tab].map(view=><option key={view} value={view}>{t(view)}</option>)}
       </select>
     </label>:null}
     <DeckToolsContent key={revision} id={id} deck={deck} run={run} onNotify={onNotify} onUnloadDeck={onUnloadDeck} onOpenBpm={onOpenBpm} tab={tab} view={selectedViews[tab]} zoomLevel={zoomLevel} onZoomChange={onZoomChange} />

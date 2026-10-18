@@ -17,7 +17,7 @@ jobs:
   quality:
     name: Install, lint, build and test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -36,6 +36,10 @@ jobs:
         run: npm run build -- --base=/rimvo/
       - name: Test
         run: npm test
+      - name: Install browser test runtimes
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser workflows
+        run: npm run test:e2e
       - name: Package public site
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

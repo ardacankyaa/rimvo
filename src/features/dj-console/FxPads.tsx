@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { FxPerformance } from './FxPerformance';
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { DeckId, FxSnapshot, AudioEngine } from '../../audio/types';
@@ -92,19 +93,19 @@ export function FxHoldControl({ id, type, enabled, loaded, latched, onLatch, onH
   }
 
   return <div className={'fx-control__group fx-pad fx-pad-' + type}>
-    <div className="fx-control__head"><h4>{label}</h4><span className="fx-control__state">{latched ? 'On · kept' : pointerHeld ? 'Held' : enabled ? 'On' : 'Off'}</span></div>
+    <div className="fx-control__head"><h4>{t(label)}</h4><span className="fx-control__state">{t(latched ? 'On · kept' : pointerHeld ? 'Held' : enabled ? 'On' : 'Off')}</span></div>
     <div className="fx-control__actions">
-      <ToggleButton ref={holdButton} className="fx-control__hold fx-pad__button" tone={id === 'A' ? 'a' : 'b'} aria-label={'Hold ' + label + ' ' + id}
+      <ToggleButton ref={holdButton} className="fx-control__hold fx-pad__button" tone={id === 'A' ? 'a' : 'b'} aria-label={t('Hold ' + label + ' ' + id)}
         aria-describedby={'fx-hold-instructions-'+id+'-'+type}
         pressed={enabled || pointerHeld || latched} disabled={!loaded} onPointerDown={begin}
         onPointerUp={event => finish(event.pointerId)} onPointerCancel={event => finish(event.pointerId)}
         onLostPointerCapture={event => finish(event.pointerId)} onKeyDown={beginKey}
-        onKeyUp={event => { if (event.code === activeKey.current) { event.preventDefault(); finish(); } }} onBlur={()=>{if(activeKey.current!==null)finish();}}><span className="fx-hold-invitation">{pointerHeld ? 'Release to return' : latched ? 'Effect kept on' : 'Hold to try'}</span><span className="fx-hold-name">{label}</span></ToggleButton>
-      <ToggleButton className="fx-control__keep fx-pad__latch" tone="cue" aria-label={'Keep ' + label + ' ' + id} pressed={latched} disabled={!loaded} onClick={toggleLatch}>
-        <span title={'Keep '+label+' on'}><Icon name="pin" /><span className="fx-keep-label">Keep</span></span>
+        onKeyUp={event => { if (event.code === activeKey.current) { event.preventDefault(); finish(); } }} onBlur={()=>{if(activeKey.current!==null)finish();}}><span className="fx-hold-invitation">{t(pointerHeld ? 'Release to return' : latched ? 'Effect kept on' : 'Hold to try')}</span><span className="fx-hold-name">{t(label)}</span></ToggleButton>
+      <ToggleButton className="fx-control__keep fx-pad__latch" tone="cue" aria-label={t('Keep ' + label + ' ' + id)} pressed={latched} disabled={!loaded} onClick={toggleLatch}>
+        <span title={t('Keep '+label+' on')}><Icon name="pin" /><span className="fx-keep-label">{t("Keep")}</span></span>
       </ToggleButton>
     </div>
-    <span id={'fx-hold-instructions-'+id+'-'+type} className="visually-hidden">Hold the pointer, Space or Enter to try the effect. Release, Escape or leave focus to return. Keep toggles the effect permanently.</span>
+    <span id={'fx-hold-instructions-'+id+'-'+type} className="visually-hidden">{t("Hold the pointer, Space or Enter to try the effect. Release, Escape or leave focus to return. Keep toggles the effect permanently.")}</span>
   </div>;
 }
 
@@ -139,10 +140,10 @@ function FxRange({ label, value, min, max, step, disabled, onChange, formatValue
     onChange(next);
   }
   return <label className="fx-control__amount">
-    <span className="fx-control__amount-label">{label}</span>
-    <input className="fx-control__range" type="range" aria-label={label} aria-valuetext={formatValue(value)} min={min} max={max} step="0.001" value={value}
+    <span className="fx-control__amount-label">{t(label)}</span>
+    <input className="fx-control__range" type="range" aria-label={t(label)} aria-valuetext={formatValue(value)} min={min} max={max} step="0.001" value={value}
       disabled={disabled} onChange={event => updateValue(Number(event.currentTarget.value))} onKeyDown={handleArrow} />
-    <output className="fx-control__amount-value">{formatValue(value)}</output>
+    <output className="fx-control__amount-value">{t(formatValue(value))}</output>
   </label>;
 }
 
@@ -164,29 +165,29 @@ function FxDetailsControls({ id, value, loaded, onChange }: Omit<FxControlsProps
   function writeReverb(changes: Partial<ReverbFx>, enabled = permanentFxEnabled(engine, id, 'reverb')): void {
     write({ type: 'reverb', ...value.reverb, ...changes, enabled });
   }
-  return <section className="fx-controls fx-controls--details" aria-label={'FX details ' + id}>
-    <section className="fx-detail-group" data-effect="delay" aria-label={'Echo details ' + id}>
-      <div className="fx-detail-heading"><h3>Echo details</h3><ToggleButton aria-label={'Enable Echo '+id} pressed={permanentFxEnabled(engine,id,'delay')} disabled={!loaded} onClick={()=>writeDelay({},!permanentFxEnabled(engine,id,'delay'))}>On</ToggleButton></div>
+  return <section className="fx-controls fx-controls--details" aria-label={t('FX details ' + id)}>
+    <section className="fx-detail-group" data-effect="delay" aria-label={t('Echo details ' + id)}>
+      <div className="fx-detail-heading"><h3>{t("Echo details")}</h3><ToggleButton aria-label={t('Enable Echo '+id)} pressed={permanentFxEnabled(engine,id,'delay')} disabled={!loaded} onClick={()=>writeDelay({},!permanentFxEnabled(engine,id,'delay'))}>{t("On")}</ToggleButton></div>
       <div className="fx-pad__settings">
-        <FxRange label={'Delay wet ' + id} value={value.delay.wet} min={0} max={0.5} step={0.01} disabled={!loaded} formatValue={formatPercent} onChange={wet => writeDelay({ wet })} />
-        <FxRange label={'Feedback ' + id} value={value.delay.feedback} min={0} max={0.6} step={0.01} disabled={!loaded} formatValue={formatPercent} onChange={feedback => writeDelay({ feedback })} />
+        <FxRange label={t('Delay wet ' + id)} value={value.delay.wet} min={0} max={0.5} step={0.01} disabled={!loaded} formatValue={formatPercent} onChange={wet => writeDelay({ wet })} />
+        <FxRange label={t('Feedback ' + id)} value={value.delay.feedback} min={0} max={0.6} step={0.01} disabled={!loaded} formatValue={formatPercent} onChange={feedback => writeDelay({ feedback })} />
       </div>
-      <div className="fx-divisions" role="group" aria-label={'Delay division ' + id}>
-        {([0.25, 0.5, 1] as const).map(division => <ToggleButton key={division} aria-label={(division === 0.25 ? '¼ beat' : division === 0.5 ? '½ beat' : '1 beat') + ' · Delay division ' + (division === 0.25 ? '1/4' : division === 0.5 ? '1/2' : '1') + ' beat ' + id}
-          pressed={value.delay.division === division} disabled={!loaded} onClick={() => writeDelay({ division })}>{division === 0.25 ? '¼' : division === 0.5 ? '½' : '1'} beat</ToggleButton>)}
+      <div className="fx-divisions" role="group" aria-label={t('Delay division ' + id)}>
+        {([0.25, 0.5, 1] as const).map(division => <ToggleButton key={division} aria-label={t((division === 0.25 ? '¼ beat' : division === 0.5 ? '½ beat' : '1 beat') + ' · Delay division ' + (division === 0.25 ? '1/4' : division === 0.5 ? '1/2' : '1') + ' beat ' + id)}
+          pressed={value.delay.division === division} disabled={!loaded} onClick={() => writeDelay({ division })}>{t(division === 0.25 ? '¼' : division === 0.5 ? '½' : '1')} {t("beat")}</ToggleButton>)}
       </div>
     </section>
-    <section className="fx-detail-group" data-effect="reverb" aria-label={'Room details ' + id}>
-      <div className="fx-detail-heading"><h3>Room details</h3><ToggleButton aria-label={'Enable Room '+id} pressed={permanentFxEnabled(engine,id,'reverb')} disabled={!loaded} onClick={()=>writeReverb({},!permanentFxEnabled(engine,id,'reverb'))}>On</ToggleButton></div>
+    <section className="fx-detail-group" data-effect="reverb" aria-label={t('Room details ' + id)}>
+      <div className="fx-detail-heading"><h3>{t("Room details")}</h3><ToggleButton aria-label={t('Enable Room '+id)} pressed={permanentFxEnabled(engine,id,'reverb')} disabled={!loaded} onClick={()=>writeReverb({},!permanentFxEnabled(engine,id,'reverb'))}>{t("On")}</ToggleButton></div>
       <div className="fx-pad__settings fx-pad__settings-single">
-        <FxRange label={'Reverb wet ' + id} value={value.reverb.wet} min={0} max={0.4} step={0.01} disabled={!loaded} formatValue={formatPercent} onChange={wet => writeReverb({ wet })} />
+        <FxRange label={t('Reverb wet ' + id)} value={value.reverb.wet} min={0} max={0.4} step={0.01} disabled={!loaded} formatValue={formatPercent} onChange={wet => writeReverb({ wet })} />
       </div>
     </section>
-    {(['flanger','tremolo','drive'] as const).map(type=><section key={type} className="fx-detail-group" data-effect={type} aria-label={fxLabels[type]+' details '+id}>
-      <h3>{fxLabels[type]} details</h3><div className="fx-pad__settings">
-      <FxRange label={fxLabels[type]+' amount '+id} value={value[type].amount} min={0} max={1} step={.01} disabled={!loaded} formatValue={formatPercent} onChange={amount=>write({type,...value[type],amount,enabled:permanentFxEnabled(engine,id,type)} as FxWrite)} />
-      {type!=='drive'&&<FxRange label={fxLabels[type]+' rate '+id} value={value[type].rate} min={.1} max={8} step={.1} disabled={!loaded} formatValue={rate=>rate.toFixed(1)+' Hz'} onChange={rate=>write({type,...value[type],rate,enabled:permanentFxEnabled(engine,id,type)})} />}
-      <ToggleButton aria-label={'Enable '+fxLabels[type]+' '+id} pressed={permanentFxEnabled(engine,id,type)} disabled={!loaded} onClick={()=>write({type,...value[type],enabled:!permanentFxEnabled(engine,id,type)} as FxWrite)}>On</ToggleButton>
+    {(['flanger','tremolo','drive'] as const).map(type=><section key={type} className="fx-detail-group" data-effect={type} aria-label={t(fxLabels[type]+' details '+id)}>
+      <h3>{t(fxLabels[type])} {t("details")}</h3><div className="fx-pad__settings">
+      <FxRange label={t(fxLabels[type]+' amount '+id)} value={value[type].amount} min={0} max={1} step={.01} disabled={!loaded} formatValue={formatPercent} onChange={amount=>write({type,...value[type],amount,enabled:permanentFxEnabled(engine,id,type)} as FxWrite)} />
+      {type!=='drive'&&<FxRange label={t(fxLabels[type]+' rate '+id)} value={value[type].rate} min={.1} max={8} step={.1} disabled={!loaded} formatValue={rate=>rate.toFixed(1)+' Hz'} onChange={rate=>write({type,...value[type],rate,enabled:permanentFxEnabled(engine,id,type)})} />}
+      <ToggleButton aria-label={t('Enable '+fxLabels[type]+' '+id)} pressed={permanentFxEnabled(engine,id,type)} disabled={!loaded} onClick={()=>write({type,...value[type],enabled:!permanentFxEnabled(engine,id,type)} as FxWrite)}>{t("On")}</ToggleButton>
       </div></section>)}
   </section>;
 }

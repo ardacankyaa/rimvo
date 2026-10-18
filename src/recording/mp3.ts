@@ -1,7 +1,7 @@
 import { Mp3Encoder } from '@breezystack/lamejs';
 
 /** Encode our canonical PCM16 stereo WAV in bounded blocks, preserving the source. */
-export function encodeRecordingMp3(wav: ArrayBuffer): Blob {
+export function encodeRecordingMp3(wav: ArrayBuffer, onProgress?: (percent: number) => void): Blob {
   const view = new DataView(wav);
   if (wav.byteLength <= 44 || view.getUint32(0) !== 0x52494646 || view.getUint32(8) !== 0x57415645
     || view.getUint16(20, true) !== 1 || view.getUint16(22, true) !== 2 || view.getUint16(34, true) !== 16
@@ -14,6 +14,8 @@ export function encodeRecordingMp3(wav: ArrayBuffer): Blob {
   const frames = (wav.byteLength - 44) / 4;
   const left = new Int16Array(1152), right = new Int16Array(1152);
   const parts: BlobPart[] = [];
+  let reported = -1;
+  onProgress?.(0);
   for (let offset = 0; offset < frames; offset += left.length) {
     const count = Math.min(left.length, frames - offset);
     for (let index = 0; index < count; index++) {
@@ -22,8 +24,11 @@ export function encodeRecordingMp3(wav: ArrayBuffer): Blob {
     }
     const encoded = encoder.encodeBuffer(left.subarray(0, count), right.subarray(0, count));
     if (encoded.length) parts.push(new Uint8Array(encoded).buffer);
+    const progress = Math.min(99, Math.floor((offset + count) / frames * 100));
+    if (progress > reported) { reported = progress; onProgress?.(progress); }
   }
   const tail = encoder.flush();
   if (tail.length) parts.push(new Uint8Array(tail).buffer);
+  onProgress?.(100);
   return new Blob(parts, { type: 'audio/mpeg' });
 }

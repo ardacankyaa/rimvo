@@ -270,6 +270,10 @@ export interface AudioEngine {
   /** Reusable stopped take; caller chooses Save / Save as names and local delivery. */
   exportRecording(): Blob;
   clearRecording(): void;
+  restoreRecording(wav: Blob): Promise<void>;
+  getHeadphoneStream(): MediaStream;
+  setHeadphoneCue(id: DeckId, enabled: boolean): void;
+  stopHeadphoneMonitoring(): void;
   initializeFromGesture(): Promise<EngineCapabilities>;
   /** Analyze a library file without installing it or changing either deck. One bounded job at a time. */
   analyzeFile(file:File|Blob,signal?:AbortSignal):Promise<{readonly durationSeconds:number;readonly bpmAnalysis:BpmAnalysisSnapshot;readonly keyAnalysis?:KeyAnalysisSnapshot}>;
@@ -299,7 +303,7 @@ export interface AudioEngine {
   nudgeDeck(id: DeckId, deltaPercent: number): Promise<CommandAck>;
   beginNudge(id: DeckId, deltaPercent: number): Promise<CommandAck>;
   endNudge(id: DeckId): Promise<CommandAck>;
-  setBeatGrid(id: DeckId, grid: { readonly bpm: number; readonly firstBeatSeconds: number }): void;
+  setBeatGrid(id: DeckId, grid: { readonly bpm: number; readonly firstBeatSeconds: number }, provenance?: Pick<BeatGridSnapshot, 'source' | 'confidence'>): void;
   clearBeatGridOverride(id: DeckId): void;
   syncDeck(id: DeckId, masterId: DeckId | null,options?:{readonly mode?:'beat'|'tempo'}): Promise<CommandAck>;
   setQuantize(id: DeckId, enabled: boolean): void;

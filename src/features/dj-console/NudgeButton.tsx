@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DeckId } from '../../audio/types';
 import { engine, getSnapshot } from '../../state/engine';
@@ -24,13 +25,13 @@ export function NudgeButton({id,direction,enabled,revision,run}:{id:DeckId;direc
     active.current={pointerId,revision,unregister:registerGesture(()=>finishRef.current())};setHeld(true);
     run(()=>engine.beginNudge(id,direction*4));
   }
-  return <button ref={button} type="button" className={held?'is-held':''} aria-label={'Nudge '+(direction<0?'backward ':'forward ')+id} aria-pressed={held} disabled={!enabled} title={'Hold to temporarily '+(direction<0?'slow down':'speed up')+' this record'}
+  return <button ref={button} type="button" className={held?'is-held':''} aria-label={t('Nudge '+(direction<0?'backward ':'forward ')+id)} aria-pressed={held} disabled={!enabled} title={t('Hold to temporarily '+(direction<0?'slow down':'speed up')+' this record')}
     onPointerDown={event=>{if(event.button!==0)return;event.preventDefault();event.currentTarget.focus({preventScroll:true});begin(event.pointerId);if(active.current)try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* Global blur cleanup remains available. */}}}
     onPointerUp={event=>finish(event.pointerId)} onPointerCancel={event=>finish(event.pointerId)} onLostPointerCapture={event=>finish(event.pointerId)}
     onBlur={()=>{if(active.current?.pointerId===null)finish();}}
     onKeyDown={event=>{if(event.code==='Space'||event.key==='Enter'){event.preventDefault();if(!event.repeat)begin(null);}if(event.key==='Escape')finish();}}
     onKeyUp={event=>{if(event.code==='Space'||event.key==='Enter'){event.preventDefault();finish();}}}
     onClick={event=>{if(event.detail===0&&!active.current)run(()=>engine.nudgeDeck(id,direction*4));}}>
-    <Icon name={direction<0?'left':'right'}/><span className="visually-hidden">{held?'Temporary '+(direction<0?'slowdown':'speedup'):'Hold to bend tempo'}</span>
+    <Icon name={direction<0?'left':'right'}/><span className="visually-hidden">{t(held?'Temporary '+(direction<0?'slowdown':'speedup'):'Hold to bend tempo')}</span>
   </button>;
 }

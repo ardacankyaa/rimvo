@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useLayoutEffect, useRef, type ButtonHTMLAttributes, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type Ref } from 'react';
 import { registerGesture } from './gesture-registry';
 
@@ -95,9 +96,9 @@ export function Knob({ label, displayLabel, value, min, max, step = 0.1, unit = 
   const style = { '--dial-angle': angle + 'deg' } as CSSProperties;
 
   return <div className={'control control-knob ' + className}>
-    <span className="control__label">{displayLabel ?? label}<output>{formatted}</output></span>
+    <span className="control__label">{t(displayLabel ?? label)}<output>{t(formatted)}</output></span>
     <div ref={node} className={'knob' + (disabled ? ' is-disabled' : '')} style={style} role="slider" tabIndex={disabled ? -1 : 0}
-      aria-label={label} aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-valuetext={formatted} aria-orientation="vertical" aria-disabled={disabled}
+      aria-label={t(label)} aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-valuetext={formatted} aria-orientation="vertical" aria-disabled={disabled}
       onPointerDown={begin} onPointerMove={move} onPointerUp={event => finish(event.pointerId)} onPointerCancel={event => finish(event.pointerId)}
       onLostPointerCapture={event => finish(event.pointerId)} onKeyDown={onKeyDown}
       onDoubleClick={defaultValue === undefined || disabled ? undefined : () => onChange(defaultValue)}>
@@ -205,16 +206,16 @@ export function LinearControl({ label, value, min, max, step = 0.01, unit = '', 
   const orientationClass = orientation === 'vertical' ? ' is-vertical' : ' is-horizontal';
 
   return <div className={'control control-linear ' + className}>
-    <span className="control__label">{label}<output>{formatted}</output></span>
+    <span className="control__label">{t(label)}<output>{t(formatted)}</output></span>
     <div ref={node} className={'linear-slider' + orientationClass + (disabled ? ' is-disabled' : '')} style={style} role="slider" tabIndex={disabled ? -1 : 0}
-      aria-label={label} aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-valuetext={formatted} aria-orientation={orientation} aria-disabled={disabled}
+      aria-label={t(label)} aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-valuetext={formatted} aria-orientation={orientation} aria-disabled={disabled}
       onPointerDown={begin} onPointerMove={move} onPointerUp={event => finish(event.pointerId)} onPointerCancel={event => finish(event.pointerId)}
       onLostPointerCapture={event => finish(event.pointerId)} onKeyDown={onKeyDown}
       onDoubleClick={defaultValue === undefined || disabled ? undefined : () => onChange(defaultValue)}>
       <span className="linear-slider__track" aria-hidden="true" />
       <span className="linear-slider__thumb" aria-hidden="true" />
     </div>
-    {(lowLabel || highLabel) && <span className="linear-slider__ends"><span>{lowLabel}</span><span>{highLabel}</span></span>}
+    {(lowLabel || highLabel) && <span className="linear-slider__ends"><span>{t(lowLabel)}</span><span>{t(highLabel)}</span></span>}
   </div>;
 }
 

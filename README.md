@@ -57,7 +57,10 @@ Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, m
 
 - Each track is limited to 8 minutes, 128 MiB of source data, and 192 MiB of decoded audio.
 - Recording stops at the earlier of 15 minutes or 128 MiB of captured PCM data. At 48 kHz this is about 11 minutes 39 seconds.
-- Tracks, analyses, and recordings belong to the current browser session. Download your recording before closing or refreshing the page.
+- **Session → Save session on this device** stores your library files, deck positions, cues, beat grids, loops, effects, mixer settings and stopped take locally (up to 256 MiB). Restore explicitly after reopening; playback stays paused. Browser storage can be cleared, so download important recordings separately. There is one saved session per site/device; saving again replaces it.
+- **Headphones** routes selected decks before the crossfader to a separate audio output in browsers supporting speaker selection. Connect an additional output/audio interface and choose a different device from the main speakers. This monitor signal is excluded from recordings. Unsupported browsers show an explanation and keep the main mixer available.
+- Choose **EN / TR** for English or Turkish. Your selected language is remembered on this device.
+- Recording shows remaining time and warns during the final minute. Discarding an unsaved take requires confirmation; MP3 conversion shows progress and can be cancelled back to WAV.
 - BPM and key are estimates; use manual adjustments when needed. Browser and device support, memory, and audio hardware affect performance.
 
 ## Available Scripts
@@ -69,12 +72,15 @@ Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, m
 | `npm run build` | Typechecks and compiles production assets into `dist/` |
 | `npm run preview` | Serves the production build locally at port 5174 |
 | `npm test` | Runs the test suite with Vitest |
+| `npm run test:e2e` | Runs real-browser workflows in Chromium, WebKit and mobile Chromium |
 | `npm run lint` | Lints source files with ESLint |
 | `npm run typecheck`| Validates TypeScript types across the codebase |
 
-The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), and the full test suite on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes.
+The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), unit/DSP tests and browser workflows on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes. Before running browser tests locally, install their runtimes with `npx playwright install chromium webkit` (Linux CI also uses `--with-deps`). Browser tests use isolated disposable contexts and the bundled test audio fixtures.
 
 The hosted build uses `npm run build -- --base=/rimvo/` so assets, demos, and audio workers resolve under the public site's path. `npm run build` remains available for other static hosts or local previews. The public site stays available when your own computer is off.
+
+The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workflows are explicitly skipped only for that runtime; interface/fallback checks still run. Linux CI requires the complete Chromium, WebKit and mobile Chromium suite to pass before publishing. Physical headphone routing additionally depends on your browser and connected outputs.
 
 ## Project Structure
 
@@ -86,8 +92,10 @@ The hosted build uses `npm run build -- --base=/rimvo/` so assets, demos, and au
 │   ├── dsp/             # Pitch pipeline, resamplers, and transport kernel
 │   ├── features/        # DJ console UI components and recording controls
 │   ├── legal/           # Privacy policy and local preference persistence
+│   ├── i18n/            # English / Turkish interface copy and language preference
 │   ├── library/         # Track metadata parser and library management
 │   ├── recording/       # Stereo capture, WAV encoding and MP3 export worker
+│   ├── session/         # Validated local session storage and explicit restoration
 │   ├── state/           # Engine singleton and immutable UI state snapshots
 │   ├── ui/              # Control primitives, knobs, sliders, and design tokens
 │   ├── App.tsx          # Main console container
@@ -102,7 +110,7 @@ The hosted build uses `npm run build -- --base=/rimvo/` so assets, demos, and au
 
 ## Privacy & Security
 
-RIMVO processes your audio in memory within your browser session and does not upload personal music or recordings. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry. An optional theme preference can be stored locally when enabled in the Cookies panel.
+RIMVO processes your audio on your device and does not upload personal music or recordings. Explicit session saves use IndexedDB (`rimvo-sessions`); delete the save from the Session menu or clear site data. Language uses localStorage (`rimvo-language`); optional theme storage is controlled in the Cookies panel. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry and never requests microphone access. Separate headphone output may request speaker-selection permission.
 
 ## License
 

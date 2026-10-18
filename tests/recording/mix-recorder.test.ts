@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MixRecorder } from '../../src/recording/mix-recorder';
 import type { CaptureMessage } from '../../src/recording/types';
+import { encodeRecordingWav } from '../../src/recording/wav';
 
 class FakeWorklet {
   static instances: FakeWorklet[] = [];
@@ -21,6 +22,20 @@ function fixture() {
 }
 afterEach(() => { FakeWorklet.instances = []; vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('recording lifecycle ownership', () => {
+  it('restores a stopped WAV exactly and rejects invalid or active replacements', async () => {
+    const { recorder, context, source } = fixture();
+    const wav = encodeRecordingWav([new Int16Array([100, -100, 200, -200])], 48000);
+    await recorder.restore(wav);
+    expect(recorder.getSnapshot()).toMatchObject({ status: 'ready', bytes: 8, sampleRate: 48000, durationSeconds: 2 / 48000 });
+    expect(recorder.export()).toBe(wav);
+    const invalid = new Blob([new Uint8Array(48)]);
+    await expect(recorder.restore(invalid)).rejects.toThrow('supported stereo WAV');
+    expect(recorder.export()).toBe(wav);
+    await recorder.start(context, source);
+    await expect(recorder.restore(wav)).rejects.toThrow('Stop the recording');
+    expect(recorder.getSnapshot().status).toBe('recording');
+    recorder.dispose();
+  });
   it('stops after final chunk ACK, caches exports and disconnects only its own tap', async () => {
     const { source, context, recorder } = fixture();
     await recorder.start(context, source);

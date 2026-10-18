@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { BpmControl } from './BpmControl';
 import {syncForMix} from './sync-action';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ChangeEvent, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from 'react';
@@ -107,9 +108,9 @@ function CueButton({ id, playing, loaded, revision, run, onAuditionChange }: { i
     unregister.current = registerGesture(() => finish(event.pointerId));
     run(() => engine.startCuePreview(id));
   }
-  return <ToggleButton ref={button} className={'transport-cue' + (holding ? ' is-held' : '')} tone="cue" aria-label={'Cue ' + id} pressed={holding} disabled={!loaded}
+  return <ToggleButton ref={button} className={'transport-cue' + (holding ? ' is-held' : '')} tone="cue" aria-label={t('Cue ' + id)} pressed={holding} disabled={!loaded}
     onPointerDown={begin} onPointerUp={event => finish(event.pointerId)} onPointerCancel={event => finish(event.pointerId)}
-    onLostPointerCapture={event => finish(event.pointerId)} onClick={event => { if (event.detail === 0 && loaded) run(() => engine.cueDeck(id)); }}>Cue</ToggleButton>;
+    onLostPointerCapture={event => finish(event.pointerId)} onClick={event => { if (event.detail === 0 && loaded) run(() => engine.cueDeck(id)); }}>{t("Cue")}</ToggleButton>;
 }
 
 export function DeckPanel({ id, deck, trackEntry, run, onError, onNotify, onLoadFile, onFocusDeck, isActive, activeTool=null, onOpenTools, loading, bpmRequest }: DeckPanelProps) {
@@ -119,8 +120,8 @@ export function DeckPanel({ id, deck, trackEntry, run, onError, onNotify, onLoad
   const trackRevision = deck.track?.revision ?? null;
   const isPlaying = deck.status === 'playing';
   const playIsLatched = isPlaying && !cueAuditioning;
-  const coverTitle = trackEntry?.title ?? deck.track?.name ?? 'Your track here';
-  const coverArtist = trackEntry?.artist ?? (loaded ? 'Local audio file' : 'Add a file or pick from Library');
+  const coverTitle = trackEntry?.title ?? deck.track?.name ?? t('Your track here');
+  const coverArtist = trackEntry?.artist ?? (loaded ? t('Local audio file') : t('Add a file or pick from Library'));
   const showArtist = loaded && !['RIMVO originals', 'Local audio file', 'Local track', 'Unknown artist'].includes(coverArtist);
   const coverUrl = trackEntry?.artworkUrl ?? null;
   const fx = deck.fx as DeckFx;
@@ -158,46 +159,46 @@ export function DeckPanel({ id, deck, trackEntry, run, onError, onNotify, onLoad
     run(() => engine.setFx(id, setting));
   };
 
-  return <section className={'deck-panel deck-panel-' + id + (isActive ? ' is-active' : '') + (!loaded ? ' is-empty' : '') + (isPlaying ? ' is-playing' : '')} aria-label={'Deck ' + id} tabIndex={0} onPointerDownCapture={() => onFocusDeck(id)} onFocusCapture={() => onFocusDeck(id)}
+  return <section className={'deck-panel deck-panel-' + id + (isActive ? ' is-active' : '') + (!loaded ? ' is-empty' : '') + (isPlaying ? ' is-playing' : '')} aria-label={t('Deck ' + id)} tabIndex={0} onPointerDownCapture={() => onFocusDeck(id)} onFocusCapture={() => onFocusDeck(id)}
     onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; event.currentTarget.classList.add('is-drop-target'); }}
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.classList.remove('is-drop-target'); }} onDrop={dropFile}>
     <header className="deck-header">
-      <div className="deck-header__topline"><div className="deck-name"><h2>Deck {id}</h2></div>
-        <span className={'deck-status status-' + (loading ? 'loading' : deck.status)}><span className="deck-status__dot" />{loading ? (isPlaying ? 'Playing · loading' : 'Loading') : deck.status === 'playing' ? 'Playing' : deck.status === 'paused' ? 'Paused' : deck.status === 'loading' ? 'Loading' : deck.status === 'error' ? 'Needs attention' : deck.status === 'empty' ? 'Empty' : 'Ready'}</span>
-        {deck.error && <span role="alert" className="deck-error">{deck.error.message}</span>}
+      <div className="deck-header__topline"><div className="deck-name"><h2>{t("Deck ")}{t(id)}</h2></div>
+        <span className={'deck-status status-' + (loading ? 'loading' : deck.status)}><span className="deck-status__dot" />{t(loading ? (isPlaying ? 'Playing · loading' : 'Loading') : deck.status === 'playing' ? 'Playing' : deck.status === 'paused' ? 'Paused' : deck.status === 'loading' ? 'Loading' : deck.status === 'error' ? 'Needs attention' : deck.status === 'empty' ? 'Empty' : 'Ready')}</span>
+        {deck.error && <span role="alert" className="deck-error">{t(deck.error.message)}</span>}
       </div>
       <div className="deck-header__track">
-        <div className="deck-track__art" role="img" aria-label={loaded ? coverTitle + ' artwork' : undefined} aria-hidden={!loaded}>
-          {coverUrl && failedArtworkId !== trackEntry?.id && <img src={coverUrl} alt={coverTitle + ' cover'} width="320" height="320" onError={() => setFailedArtworkId(trackEntry?.id ?? null)} />}
+        <div className="deck-track__art" role="img" aria-label={t(loaded ? coverTitle + ' artwork' : undefined)} aria-hidden={!loaded}>
+          {coverUrl && failedArtworkId !== trackEntry?.id && <img src={coverUrl} alt={t(coverTitle + ' cover')} width="320" height="320" onError={() => setFailedArtworkId(trackEntry?.id ?? null)} />}
           <span className="deck-track__fallback" hidden={!!coverUrl && failedArtworkId !== trackEntry?.id}>{loaded ? initials(coverTitle) : <Icon name="folder" />}</span>
-          <span className="deck-track__art-id">{id}</span>
+          <span className="deck-track__art-id">{t(id)}</span>
         </div>
-        <div className="deck-track__info"><div className="deck-track__title"><span className="deck-name__mark" aria-hidden="true">{id}</span><h3 title={coverTitle}>{coverTitle}</h3></div><p className={showArtist?undefined:'visually-hidden'} title={coverArtist}>{coverArtist}</p><span className="deck-track__meta">{loaded ? (deck.effectiveBpm?.toFixed(0) ?? '—') + ' BPM · ' + deck.track?.format.toUpperCase() : 'MP3 · WAV · FLAC'}</span><div className="deck-track__progress"><span>{formatMediaTime(deck.positionSeconds).replace(/\.\d+$/, '')}</span><i style={{'--track-progress': (deck.durationSeconds ? deck.positionSeconds / deck.durationSeconds * 100 : 0) + '%'} as CSSProperties} /><span>{formatMediaTime(deck.durationSeconds).replace(/\.\d+$/, '')}</span></div></div>
-        <label className={'file-button deck-header__replace' + (!loaded ? ' deck-header__replace--empty' : '')}><Icon name="folder" /><span>{loaded ? 'Replace' : 'Add track'}</span><input key={id + '-' + deck.revision} aria-label={(loaded ? 'Replace ' : 'Load track ') + id} type="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac" onChange={receiveFile} /></label>
+        <div className="deck-track__info"><div className="deck-track__title"><span className="deck-name__mark" aria-hidden="true">{t(id)}</span><h3 title={coverTitle}>{coverTitle}</h3></div><p className={showArtist?undefined:'visually-hidden'} title={coverArtist}>{coverArtist}</p><span className="deck-track__meta">{t(loaded ? (deck.effectiveBpm?.toFixed(0) ?? '—') + ' BPM · ' + deck.track?.format.toUpperCase() : 'MP3 · WAV · FLAC')}</span><div className="deck-track__progress"><span>{t(formatMediaTime(deck.positionSeconds).replace(/\.\d+$/, ''))}</span><i style={{'--track-progress': (deck.durationSeconds ? deck.positionSeconds / deck.durationSeconds * 100 : 0) + '%'} as CSSProperties} /><span>{t(formatMediaTime(deck.durationSeconds).replace(/\.\d+$/, ''))}</span></div></div>
+        <label className={'file-button deck-header__replace' + (!loaded ? ' deck-header__replace--empty' : '')}><Icon name="folder" /><span>{t(loaded ? 'Replace' : 'Add track')}</span><input key={id + '-' + deck.revision} aria-label={t((loaded ? 'Replace ' : 'Load track ') + id)} type="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac" onChange={receiveFile} /></label>
       </div>
     </header>
     <div className="deck-quick-controls">
-    <details className={'deck-quick-effects' + (activeEffects ? ' has-active-effects' : '')}><summary><svg className="effects-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-10 3 10 6 0s3 10 6 0 3 10 6 0" /></svg>Effects {activeEffects > 0 && <span className="effects-count"><span aria-hidden="true">{activeEffects}</span><span className="visually-hidden">{activeEffects} active effects</span></span>}<span className="disclosure-chevron" aria-hidden="true">⌄</span></summary><div className="deck-effects-menu"><FxControls key={trackRevision ?? -1} variant="quick" id={id} value={fx} loaded={loaded} onChange={writeFx} /><button type="button" aria-label={'FX details ' + id} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); onOpenTools(id,'fx'); }}>FX details</button></div></details>
-    <button className="deck-tools-entry" type="button" aria-label={'Tools ' + id} aria-controls={'dock-panel-'+id} aria-expanded={activeTool==='loop'} onClick={() => onOpenTools(id,'loop')}>
-      <span className="loop-symbol" aria-hidden="true">↻</span><span className="deck-tools-entry__status">{deck.loopBeats ?? 'Loop'}</span><span className="disclosure-chevron" aria-hidden="true">⌄</span>
+    <details className={'deck-quick-effects' + (activeEffects ? ' has-active-effects' : '')}><summary><svg className="effects-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c3-10 3 10 6 0s3 10 6 0 3 10 6 0" /></svg>{t("Effects")}{activeEffects > 0 && <span className="effects-count"><span aria-hidden="true">{t(activeEffects)}</span><span className="visually-hidden">{t(activeEffects)} {t("active effects")}</span></span>}<span className="disclosure-chevron" aria-hidden="true">⌄</span></summary><div className="deck-effects-menu"><FxControls key={trackRevision ?? -1} variant="quick" id={id} value={fx} loaded={loaded} onChange={writeFx} /><button type="button" aria-label={t('FX details ' + id)} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); onOpenTools(id,'fx'); }}>{t("FX details")}</button></div></details>
+    <button className="deck-tools-entry" type="button" aria-label={t('Tools ' + id)} aria-controls={'dock-panel-'+id} aria-expanded={activeTool==='loop'} onClick={() => onOpenTools(id,'loop')}>
+      <span className="loop-symbol" aria-hidden="true">↻</span><span className="deck-tools-entry__status">{t(deck.loopBeats ?? 'Loop')}</span><span className="disclosure-chevron" aria-hidden="true">⌄</span>
     </button>
-    <button className="deck-track-disclosure" type="button" aria-label={'Track information ' + id} aria-controls={'dock-panel-'+id} aria-expanded={activeTool==='track'} onClick={() => onOpenTools(id,'track')}>•••</button>
+    <button className="deck-track-disclosure" type="button" aria-label={t('Track information ' + id)} aria-controls={'dock-panel-'+id} aria-expanded={activeTool==='track'} onClick={() => onOpenTools(id,'track')}>•••</button>
     </div>
     <div className="deck-performance">
     <div className="transport-row">
       <CueButton id={id} playing={isPlaying} loaded={loaded} revision={deck.revision} run={run} onAuditionChange={setCueAuditioning} />
-      <ToggleButton className="transport-play" tone={id === 'A' ? 'a' : 'b'} aria-label={'Play/Pause ' + id} pressed={playIsLatched} disabled={!loaded}
+      <ToggleButton className="transport-play" tone={id === 'A' ? 'a' : 'b'} aria-label={t('Play/Pause ' + id)} pressed={playIsLatched} disabled={!loaded}
         onClick={() => { if (cueAuditioning) { setCueAuditioning(false); run(() => engine.playDeck(id)); return; } run(() => isPlaying ? engine.pauseDeck(id) : engine.playDeck(id)); }}>
-        <Icon name={playIsLatched ? 'pause' : 'play'} /><span className="visually-hidden">{isPlaying ? 'Pause' : 'Play'}</span>
+        <Icon name={playIsLatched ? 'pause' : 'play'} /><span className="visually-hidden">{t(isPlaying ? 'Pause' : 'Play')}</span>
       </ToggleButton>
-      <ToggleButton className="sync-button" tone="cue" aria-label={'Sync ' + id} aria-describedby={'sync-reason-'+id} title={syncReasonText(deck)} pressed={deck.sync.status === 'active'} disabled={!loaded}
-        onClick={() => run(() => syncForMix(engine,id))}>{deck.sync.status==='active'&&deck.sync.mode==='tempo'?'Tempo':'Sync'}</ToggleButton>
-      <span id={'sync-reason-'+id} className={'sync-note' + (deck.sync.status === 'unavailable' ? ' is-unavailable' : '')}>{syncReasonText(deck)}</span>
+      <ToggleButton className="sync-button" tone="cue" aria-label={t('Sync ' + id)} aria-describedby={'sync-reason-'+id} title={t(syncReasonText(deck))} pressed={deck.sync.status === 'active'} disabled={!loaded}
+        onClick={() => run(() => syncForMix(engine,id))}>{t(deck.sync.status==='active'&&deck.sync.mode==='tempo'?'Tempo':'Sync')}</ToggleButton>
+      <span id={'sync-reason-'+id} className={'sync-note' + (deck.sync.status === 'unavailable' ? ' is-unavailable' : '')}>{t(syncReasonText(deck))}</span>
     </div>
 
-      <div className="deck-performance__platter"><JogWheel id={id} durationSeconds={deck.durationSeconds} revision={deck.revision} disabled={!loaded} onError={onError} artworkUrl={coverUrl} /><span className="record-caption" aria-hidden="true">{loaded ? isPlaying ? 'Scratch · release to keep playing' : 'Play, then try a scratch' : 'Start with a track you love'}</span></div>
+      <div className="deck-performance__platter"><JogWheel id={id} durationSeconds={deck.durationSeconds} revision={deck.revision} disabled={!loaded} onError={onError} artworkUrl={coverUrl} /><span className="record-caption" aria-hidden="true">{t(loaded ? isPlaying ? 'Scratch · release to keep playing' : 'Play, then try a scratch' : 'Start with a track you love')}</span></div>
       <div className="deck-performance__tools"><BpmControl key={trackRevision ?? -1} id={id} deck={deck} run={run} openTrackBpmRequest={bpmRequest} />
-        <LinearControl orientation="vertical" className="tempo-fader" label={'Tempo ' + id} value={deck.tempoPercent} min={-16} max={16} step={0.1} defaultValue={0} disabled={!loaded} unit="%" valueText={number => (number > 0 ? '+' : '') + number.toFixed(1) + '%'} onChange={setTempo} />
+        <LinearControl orientation="vertical" className="tempo-fader" label={t('Tempo ' + id)} value={deck.tempoPercent} min={-16} max={16} step={0.1} defaultValue={0} disabled={!loaded} unit="%" valueText={number => (number > 0 ? '+' : '') + number.toFixed(1) + '%'} onChange={setTempo} />
         <div className="nudge-row"><NudgeButton id={id} direction={-1} enabled={loaded&&isPlaying&&!deck.scratchActive} revision={deck.revision} run={run}/><NudgeButton id={id} direction={1} enabled={loaded&&isPlaying&&!deck.scratchActive} revision={deck.revision} run={run}/></div>
       </div>
     </div>

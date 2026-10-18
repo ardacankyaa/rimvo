@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from 'react';
 import type { DeckId, HotCueIndex } from './audio/types';
 import { engine, getSnapshot, subscribe } from './state/engine';
 import { createUiSnapshotReader } from './state/ui-snapshot';
@@ -13,9 +13,12 @@ import { BrandMark } from './ui/BrandMark';
 import { GuidedMixMissions } from './features/dj-console/GuidedMixMissions';
 import { positionDisclosure } from './ui/disclosure-position';
 import { RecordingControls } from './features/recording/RecordingControls';
-import { LegalPanel } from './legal/LegalPanel';
 import type { LegalPage } from './legal/policies';
 import { readThemePreference, writeThemePreference } from './legal/preference-storage';
+import { SessionControls } from './session/SessionControls';
+import { HeadphoneControls } from './features/dj-console/HeadphoneControls';
+import { setLanguage, t, useLanguage } from './i18n';
+const LegalPanel = lazy(() => import('./legal/LegalPanel').then(module => ({ default: module.LegalPanel })));
 
 type ErrorOwner = DeckId | 'library' | 'general';
 type UiError = { readonly message: string; readonly owner: ErrorOwner; readonly retry?: {readonly trackId:string;readonly deckId:DeckId} };
@@ -64,6 +67,8 @@ function dialogTab(event: ReactKeyboardEvent<HTMLDialogElement>): void {
 }
 
 export default function App() {
+  const language = useLanguage();
+  useEffect(() => { document.documentElement.lang = language; }, [language]);
   const [theme,setTheme] = useState(readThemePreference);
   const [legalPage, setLegalPage] = useState<LegalPage | null>(null);
   const legalOpener = useRef<HTMLButtonElement>(null);
@@ -428,16 +433,16 @@ export default function App() {
     document.getElementById('dock-tab-' + selected)?.focus();
   }
 
-  const errorNotice=error&&<div className="dock-error" role="alert"><span><strong>{error.owner==='A'||error.owner==='B'?'Deck '+error.owner:error.owner==='library'?'Library':'Audio'} · </strong>{error.message}</span>
-    {error.retry&&trackById.has(error.retry.trackId)&&<button type="button" onClick={()=>{const retry=error.retry!;run(()=>loadFromLibrary(retry.trackId,retry.deckId));}}>Retry load</button>}
-    {!error.retry&&error.owner!=='general'&&<button type="button" onClick={()=>importFiles.current?.click()}>Choose files</button>}
-    <button type="button" aria-label="Dismiss error" onClick={()=>setError(null)}>Dismiss</button></div>;
+  const errorNotice=error&&<div className="dock-error" role="alert"><span><strong>{t(error.owner==='A'||error.owner==='B'?'Deck '+error.owner:error.owner==='library'?'Library':'Audio')} · </strong>{t(error.message)}</span>
+    {error.retry&&trackById.has(error.retry.trackId)&&<button type="button" onClick={()=>{const retry=error.retry!;run(()=>loadFromLibrary(retry.trackId,retry.deckId));}}>{t("Retry load")}</button>}
+    {!error.retry&&error.owner!=='general'&&<button type="button" onClick={()=>importFiles.current?.click()}>{t("Choose files")}</button>}
+    <button type="button" aria-label={t("Dismiss error")} onClick={()=>setError(null)}>{t("Dismiss")}</button></div>;
   return <>
-    <a className="skip-link" href="#main-console">Skip to main content</a>
+    <a className="skip-link" href="#main-console">{t("Skip to main content")}</a>
     <main id="main-console" tabIndex={-1} className="app-shell">
     <header className="topbar"><div className="brand-lockup"><BrandMark />
-        <h1>RIMVO</h1></div>
-      <label className="search-field workspace-search"><Icon name="search" /><input ref={searchInput} role="combobox" aria-label="Search library" aria-expanded={searchOpen} aria-haspopup="dialog" aria-controls="dock-panel-library" name="library-search" autoComplete="off" type="search" value={query}
+        <h1>{t("RIMVO")}</h1></div>
+      <label className="search-field workspace-search"><Icon name="search" /><input ref={searchInput} role="combobox" aria-label={t("Search library")} aria-expanded={searchOpen} aria-haspopup="dialog" aria-controls="dock-panel-library" name="library-search" autoComplete="off" type="search" value={query}
         onClick={()=>setSearchOpen(true)} onChange={event=>{setQuery(event.currentTarget.value);setSearchOpen(true);}}
         onKeyDown={event=>{
           if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setQuery('');closeSearch();}
@@ -447,34 +452,42 @@ export default function App() {
               (panel?.querySelector<HTMLButtonElement>('.library-track__loaders button:not(:disabled)')??panel?.querySelector<HTMLButtonElement>('.track-search__close'))?.focus({preventScroll:true});
             });
           }
-        }} placeholder="Search music" /></label>
-      <div className="audio-session"><RecordingControls hasTracks={Boolean(snapshot.decks.A.track || snapshot.decks.B.track)} /><button type="button" className="theme-toggle" aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'} onClick={()=>setTheme(current=>current==='dark'?'light':'dark')}><svg viewBox="0 0 24 24" aria-hidden="true">{theme==='dark'?<><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></>:<path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/>}</svg></button><span className={'audio-session__state' + (snapshot.contextState === 'running' ? ' is-running' : '')}><i />{audioLabel}</span>
-        {snapshot.sampleRate && <span className="audio-session__rate">{(snapshot.sampleRate / 1000).toFixed(1)} kHz</span>}
-        {showResume&&<button type="button" className="audio-recovery" onClick={()=>run(()=>engine.resume())}>Resume audio</button>}
-        {requiresReload&&<button type="button" className="audio-recovery" onClick={()=>{document.querySelector<HTMLDetailsElement>('.session-menu')!.open=true;document.querySelector<HTMLButtonElement>('.audio-session__recovery button')?.focus();}}>Restore audio</button>}
-        <details className="session-menu"><summary aria-label="Audio session and demo tracks"><Icon name="power" /></summary><div className="session-menu__content">
-        <button type="button" className="audio-start" aria-label="Start audio" disabled={requiresReload} onClick={() => run(() => engine.initializeFromGesture())}>Start audio</button>
-        <button type="button" className="audio-start" aria-label="Load demo decks" disabled={Boolean(loadingByDeck.A || loadingByDeck.B)} onClick={() => run(loadDemoDecks)}>Replace both with demos</button>
-        <button type="button" className="audio-secondary" aria-label="Suspend audio" disabled={snapshot.contextState !== 'running'} onClick={() => run(() => engine.suspend())}>Suspend</button>
-        {requiresReload && <div className="audio-session__recovery"><p>Reload clears this session; add local files again.</p><button type="button" className="audio-secondary" onClick={() => window.location.reload()}>Reload app</button></div>}
+        }} placeholder={t("Search music")} /></label>
+      <div className="audio-session"><RecordingControls hasTracks={Boolean(snapshot.decks.A.track || snapshot.decks.B.track)} /><button type="button" className="theme-toggle" aria-label={t(theme==='dark'?'Switch to light mode':'Switch to dark mode')} onClick={()=>setTheme(current=>current==='dark'?'light':'dark')}><svg viewBox="0 0 24 24" aria-hidden="true">{theme==='dark'?<><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></>:<path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/>}</svg></button><span className={'audio-session__state' + (snapshot.contextState === 'running' ? ' is-running' : '')}><i />{t(audioLabel)}</span>
+        {snapshot.sampleRate && <span className="audio-session__rate">{t((snapshot.sampleRate / 1000).toFixed(1))} {t("kHz")}</span>}
+        {showResume&&<button type="button" className="audio-recovery" onClick={()=>run(()=>engine.resume())}>{t("Resume audio")}</button>}
+        {requiresReload&&<button type="button" className="audio-recovery" onClick={()=>{document.querySelector<HTMLDetailsElement>('.session-menu')!.open=true;document.querySelector<HTMLButtonElement>('.audio-session__recovery button')?.focus();}}>{t("Restore audio")}</button>}
+        <details className="session-menu"><summary aria-label={t("Audio session and demo tracks")}><Icon name="power" /></summary><div className="session-menu__content">
+        <button type="button" className="audio-start" aria-label={t("Start audio")} disabled={requiresReload} onClick={() => run(() => engine.initializeFromGesture())}>{t("Start audio")}</button>
+        <button type="button" className="audio-start" aria-label={t("Load demo decks")} disabled={Boolean(loadingByDeck.A || loadingByDeck.B)} onClick={() => run(loadDemoDecks)}>{t("Replace both with demos")}</button>
+        <button type="button" className="audio-secondary" aria-label={t("Suspend audio")} disabled={snapshot.contextState !== 'running'} onClick={() => run(() => engine.suspend())}>{t("Suspend")}</button>
+        {requiresReload && <div className="audio-session__recovery"><p>{t("Reload clears this session; add local files again.")}</p><button type="button" className="audio-secondary" onClick={() => window.location.reload()}>{t("Reload app")}</button></div>}
         </div></details>
-        <button type="button" className="audio-secondary audio-add" aria-label="Add your tracks" title="Add your tracks" onClick={() => { openDock('library'); importFiles.current?.click(); }}><Icon name="plus" /></button>
-        <input ref={importFiles} type="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac" multiple hidden aria-label="Add your tracks files"
+        <button type="button" className="audio-secondary audio-add" aria-label={t("Add your tracks")} title={t("Add your tracks")} onClick={() => { openDock('library'); importFiles.current?.click(); }}><Icon name="plus" /></button>
+        <input ref={importFiles} type="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac" multiple hidden aria-label={t("Add your tracks files")}
           onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void addFiles(files).catch(cause => reportError(cause, 'library')); }} />
-        <button ref={helpOpener} type="button" className="shortcut-open" aria-label="Help and keyboard shortcuts" aria-expanded={helpOpen} onClick={event => {helpReturnTarget.current=event.currentTarget;setHelpOpen(true);}}><Icon name="question" /><span>Help</span></button>
+        <button ref={helpOpener} type="button" className="shortcut-open" aria-label={t("Help and keyboard shortcuts")} aria-expanded={helpOpen} onClick={event => {helpReturnTarget.current=event.currentTarget;setHelpOpen(true);}}><Icon name="question" /><span>{t("Help")}</span></button>
       </div>
     </header>
-    <section className={'waveform-bank' + (!snapshot.decks.A.track && !snapshot.decks.B.track ? ' waveform-bank--welcome' : '')} aria-label="Deck waveforms">
-      {!snapshot.decks.A.track && !snapshot.decks.B.track ? <div className="first-session" role="region" aria-label="Start your first mix">
-        <div className="first-session__records" aria-hidden="true">{['demo-after-hours','demo-open-circuit'].map((trackId,index) => <span key={trackId}>{trackById.get(trackId)?.artworkUrl ? <img src={trackById.get(trackId)!.artworkUrl!} alt="" /> : <i>{index === 0 ? 'A' : 'B'}</i>}</span>)}</div>
-        <div className="first-session__copy"><h2>Your first mix</h2><p className="visually-hidden">Play a track. Blend the records. Try an effect.</p></div>
-        <div className="first-session__actions"><button type="button" className="demo-entry" disabled={requiresReload || Boolean(loadingByDeck.A || loadingByDeck.B)} title="Load two demo tracks, then press Play" onClick={() => run(async () => {
+    <section className="workspace-tools" aria-label={t('Workspace tools')}>
+      <SessionControls assignments={{ A: entryA?.id ?? null, B: entryB?.id ?? null }} onRestored={assignments => {
+        setTrackAssignment({ A: assignments.A ? { trackId: assignments.A, revision: getSnapshot().decks.A.revision } : null,
+          B: assignments.B ? { trackId: assignments.B, revision: getSnapshot().decks.B.revision } : null });
+      }} />
+      <HeadphoneControls />
+      <label className="language-control"><span>{t('Language')}</span><select aria-label={t('Language')} value={language} onChange={event => setLanguage(event.target.value as 'en' | 'tr')}><option value="en">{t("EN")}</option><option value="tr">{t("TR")}</option></select></label>
+    </section>
+    <section className={'waveform-bank' + (!snapshot.decks.A.track && !snapshot.decks.B.track ? ' waveform-bank--welcome' : '')} aria-label={t("Deck waveforms")}>
+      {!snapshot.decks.A.track && !snapshot.decks.B.track ? <div className="first-session" role="region" aria-label={t("Start your first mix")}>
+        <div className="first-session__records" aria-hidden="true">{['demo-after-hours','demo-open-circuit'].map((trackId,index) => <span key={trackId}>{trackById.get(trackId)?.artworkUrl ? <img src={trackById.get(trackId)!.artworkUrl!} alt="" /> : <i>{t(index === 0 ? 'A' : 'B')}</i>}</span>)}</div>
+        <div className="first-session__copy"><h2>{t("Your first mix")}</h2><p className="visually-hidden">{t("Play a track. Blend the records. Try an effect.")}</p></div>
+        <div className="first-session__actions"><button type="button" className="demo-entry" disabled={requiresReload || Boolean(loadingByDeck.A || loadingByDeck.B)} title={t("Load two demo tracks, then press Play")} onClick={() => run(async () => {
           const loading=loadDemoDecks();const focusIntent=statusIntent.current;await loading;
           if (statusIntent.current===focusIntent&&getSnapshot().decks.A.track && getSnapshot().decks.B.track && document.activeElement === document.body) {
-            document.querySelector<HTMLButtonElement>('[aria-label="Play/Pause A"]')?.focus({ preventScroll: true });
+            document.querySelector<HTMLButtonElement>('[aria-label="'+t('Play/Pause A')+'"]')?.focus({ preventScroll: true });
           }
-        })}><svg className="first-session__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="6"/><circle cx="16" cy="12" r="6"/><circle cx="8" cy="12" r="1"/><circle cx="16" cy="12" r="1"/></svg>{loadingByDeck.A || loadingByDeck.B ? 'Loading…' : 'Try a mix'}</button>
-        <button type="button" className="first-session__import" onClick={() => { openDock('library'); importFiles.current?.click(); }}><Icon name="folder" />Add music</button></div>
+        })}><svg className="first-session__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="6"/><circle cx="16" cy="12" r="6"/><circle cx="8" cy="12" r="1"/><circle cx="16" cy="12" r="1"/></svg>{t(loadingByDeck.A || loadingByDeck.B ? 'Loading…' : 'Try a mix')}</button>
+        <button type="button" className="first-session__import" onClick={() => { openDock('library'); importFiles.current?.click(); }}><Icon name="folder" />{t("Add music")}</button></div>
       </div> : (['A','B'] as const).map(id => {
         const deck=snapshot.decks[id];
         return <div key={id} data-deck={id} onFocusCapture={selectWaveformDeck} onPointerDownCapture={selectWaveformDeck}>
@@ -493,19 +506,19 @@ export default function App() {
       <DeckPanel id="B" deck={snapshot.decks.B} trackEntry={entryB} bpmRequest={bpmRequests.B} run={run} onError={cause => reportError(cause, 'B')} onNotify={setMessage}
         onLoadFile={addFileAndLoad} onUnloadDeck={unloadDeck} onFocusDeck={selectDeck} isActive={activeDeckId === 'B'} activeTool={dockContext==='B'?toolTabs.B:null} zoomLevel={zoomByDeck.B} onOpenTools={openDeckTools} loading={loadingByDeck.B !== null} />
     </div>
-    <section className={'tools-dock'+(dockContext!=='library'?' tools-dock--engaged':'')} data-context={dockContext} aria-label="Library and tools">
-      <div className="tools-dock__tabs" role="tablist" aria-label="Session tools">
+    <section className={'tools-dock'+(dockContext!=='library'?' tools-dock--engaged':'')} data-context={dockContext} aria-label={t("Library and tools")}>
+      <div className="tools-dock__tabs" role="tablist" aria-label={t("Session tools")}>
         {dockContexts.map(context => <button key={context} id={'dock-tab-' + context} type="button" role="tab" aria-selected={dockContext === context}
-          aria-controls={'dock-panel-' + context} tabIndex={dockContext === context ? 0 : -1} onClick={() => openDock(context)} onKeyDown={event => dockKey(event, context)}><Icon name={context==='library'?'folder':context==='mixer'?'power':'play'} />{dockLabels[context]}</button>)}
-        <span className="tools-dock__hint">{dockContext === 'library' ? 'Load a track into A or B. Files stay on this device.' : 'Your main mixing controls stay above.'}</span>
+          aria-controls={'dock-panel-' + context} tabIndex={dockContext === context ? 0 : -1} onClick={() => openDock(context)} onKeyDown={event => dockKey(event, context)}><Icon name={context==='library'?'folder':context==='mixer'?'power':'play'} />{t(dockLabels[context])}</button>)}
+        <span className="tools-dock__hint">{t(dockContext === 'library' ? 'Load a track into A or B. Files stay on this device.' : 'Your main mixing controls stay above.')}</span>
       </div>
-      <div className="tools-dock__body">{dockContext!=='library'&&<button type="button" className="mobile-dock-close" aria-label="Close tools" onClick={()=>openDock('library')}>×</button>}<i key={dockSignal} className="tool-reveal-signal" aria-hidden="true" />
-        {!searchOpen&&errorNotice}
-        <div ref={libraryPopup} className={'tools-panel'+(searchOpen?' track-search-popover':'')} id="dock-panel-library" role={searchOpen?'dialog':'tabpanel'} aria-label={searchOpen?'Track search results':undefined} aria-labelledby={searchOpen?undefined:'dock-tab-library'} hidden={!searchOpen && dockContext !== 'library'}>
-          {searchOpen && <button type="button" className="track-search__close" aria-label="Close track search" onClick={()=>closeSearch(true)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>}
+      <div className="tools-dock__body">{dockContext!=='library'&&<button type="button" className="mobile-dock-close" aria-label={t("Close tools")} onClick={()=>openDock('library')}>×</button>}<i key={dockSignal} className="tool-reveal-signal" aria-hidden="true" />
+        {t(!searchOpen&&errorNotice)}
+        <div ref={libraryPopup} className={'tools-panel'+(searchOpen?' track-search-popover':'')} id="dock-panel-library" role={searchOpen?'dialog':'tabpanel'} aria-label={t(searchOpen?'Track search results':undefined)} aria-labelledby={searchOpen?undefined:'dock-tab-library'} hidden={!searchOpen && dockContext !== 'library'}>
+          {searchOpen && <button type="button" className="track-search__close" aria-label={t("Close track search")} onClick={()=>closeSearch(true)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>}
           <LibraryPanel tracks={tracks} query={query} loadingByDeck={loadingByDeck} loadedByDeck={{A:entryA?.id??null,B:entryB?.id??null}} occupiedByDeck={{A:Boolean(snapshot.decks.A.track),B:Boolean(snapshot.decks.B.track)}} onAdd={addFiles} onLoad={loadFromLibrary} onRemove={removeTrack}
             onError={cause => reportError(cause, 'library')} />
-          {searchOpen&&errorNotice}
+          {t(searchOpen&&errorNotice)}
         </div>
         {(['A', 'B'] as const).map(id => <div className="tools-panel" key={id} id={'dock-panel-' + id} role="tabpanel" aria-labelledby={'dock-tab-' + id} hidden={dockContext !== id}>
           <DeckTools key={snapshot.decks[id].revision} id={id} deck={snapshot.decks[id]} onOpenBpm={openTrackBpm} run={run} onError={cause => reportError(cause, id)} onNotify={setMessage}
@@ -515,26 +528,26 @@ export default function App() {
         <div className="tools-panel" id="dock-panel-mixer" role="tabpanel" aria-labelledby="dock-tab-mixer" hidden={dockContext !== 'mixer'}><MixerTools snapshot={snapshot} run={run} /></div>
       </div>
     </section>
-    <footer className="session-footer"><span className="local-mark" title="All processing is local to this browser"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5" y="9" width="10" height="8" rx="2"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/></svg><span className="visually-hidden">All processing is local to this browser</span></span>
-      <nav className="legal-links" aria-label="Policies">{(['privacy','cookies','terms'] as const).map(page=><button key={page} type="button" onClick={event=>{cancelAllGestures();legalOpener.current=event.currentTarget;setLegalPage(page);}}>{page==='privacy'?'Privacy':page==='cookies'?'Cookies':'Terms'}</button>)}</nav>
-      <div className="session-footer__right"><span className={(message.startsWith('Loaded ')&&!message.startsWith('Loaded “'))||message==='Tracks added to Library.'||message.startsWith('Unloaded ')||message==='Try a mix with the demo tracks, or add your own.'?'is-quiet-status':undefined} role="status" aria-live="polite" title={message}>{message}</span></div>
+    <footer className="session-footer"><span className="local-mark" title={t("All processing is local to this browser")}><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5" y="9" width="10" height="8" rx="2"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/></svg><span className="visually-hidden">{t("All processing is local to this browser")}</span></span>
+      <nav className="legal-links" aria-label={t("Policies")}>{(['privacy','cookies','terms'] as const).map(page=><button key={page} type="button" onClick={event=>{cancelAllGestures();legalOpener.current=event.currentTarget;setLegalPage(page);}}>{t(page==='privacy'?'Privacy':page==='cookies'?'Cookies':'Terms')}</button>)}</nav>
+      <div className="session-footer__right"><span className={(message.startsWith('Loaded ')&&!message.startsWith('Loaded “'))||message==='Tracks added to Library.'||message.startsWith('Unloaded ')||message==='Try a mix with the demo tracks, or add your own.'?'is-quiet-status':undefined} role="status" aria-live="polite" title={t(message)}>{t(message)}</span></div>
     </footer>
-    {legalPage&&<LegalPanel key={legalPage} page={legalPage} onClose={()=>{setLegalPage(null);requestAnimationFrame(()=>legalOpener.current?.focus({preventScroll:true}));}} />}
+    {legalPage&&<Suspense fallback={<p role="status">{t('Loading…')}</p>}><LegalPanel key={legalPage} page={legalPage} onClose={()=>{setLegalPage(null);requestAnimationFrame(()=>legalOpener.current?.focus({preventScroll:true}));}} /></Suspense>}
     <dialog ref={helpDialog} className="help-dialog" aria-labelledby="shortcut-title" onCancel={event => { event.preventDefault(); setHelpOpen(false); }}
       onClose={() => { if (helpOpen) setHelpOpen(false); }} onClick={event => { if (event.target === event.currentTarget) setHelpOpen(false); }} onKeyDown={dialogTab}>
-      <div className="help-dialog__head"><div><span className="library-panel__eyebrow">{helpPage==='First mix'?'Learn by doing':'Quick reference'}</span><h2 id="shortcut-title">{helpPage==='First mix'?'Your first mix':'Keyboard shortcuts'}</h2></div>
-        <button ref={closeHelpButton} type="button" aria-label="Close help" onClick={() => setHelpOpen(false)}>Close</button></div>
-      <nav className="help-pages" aria-label="Help topics">{['First mix','Controls','Shortcuts','Local audio'].map(topic=><button key={topic} type="button" aria-pressed={helpPage===topic} onClick={()=>setHelpPage(topic)}>{topic}</button>)}</nav>
-      <div hidden={helpPage!=='Shortcuts'}><dl className="shortcut-list"><div><dt><kbd>Space</kbd></dt><dd>Play or pause the focused deck</dd></div>
-        <div><dt><kbd>Q</kbd></dt><dd>Return to that deck’s cue point</dd></div>
-        <div><dt><kbd>1</kbd>–<kbd>8</kbd></dt><dd>Set or trigger hot cues on the focused deck</dd></div>
-        <div><dt><kbd>Shift</kbd> + <kbd>←</kbd>/<kbd>→</kbd></dt><dd>Nudge tempo briefly</dd></div>
-        <div><dt><kbd>[</kbd>/<kbd>]</kbd></dt><dd>Move the crossfader toward Deck A or B</dd></div>
-        <div><dt><kbd>?</kbd></dt><dd>Open this shortcut reference</dd></div></dl>
-      <p>Use Tab to focus a deck panel first. Shortcuts pause while you type or focus an interactive control.</p></div>
-      <div hidden={helpPage!=='First mix'}><GuidedMixMissions key={mixPair} snapshot={snapshot} completedTransitions={completedTransitions} run={run} loadDemos={loadEmptyDemoDecks} onOpenBpm={openTrackBpm} onNewRound={()=>setTransitionProgress({pair:mixPair,count:0})} onOpenCanvas={()=>{setHelpOpen(false);requestAnimationFrame(()=>{const toggle=document.querySelector<HTMLButtonElement>('[aria-label="Transition canvas"]');if(toggle?.getAttribute('aria-pressed')==='false')toggle.click();document.querySelector<HTMLButtonElement>('[aria-label="Draw your transition"]')?.focus({preventScroll:true});});}}/></div>
-      <div hidden={helpPage!=='Controls'}><p>Turn a record to scratch; release to return to its previous playback mode. Hold Cue to preview from a paused cue point.</p><p>Choose Echo, Room, Flanger, Tremolo or Drive in Effects. Hold and move on the pad to shape the sound. The pin keeps it on.</p><p>Drag knobs vertically. Hold Shift for fine adjustment; double-click a continuous control to restore its default. Tempo changes speed. Tone lets you lower or raise the pitch separately.</p></div>
-      <div hidden={helpPage!=='Local audio'}><p>Tracks and analysis stay in this browser session. Add or drop MP3, WAV or FLAC files. Reloading clears the session.</p><p>Audio starts after your first interaction. Suspend pauses the audio context; Resume restores it. A closed context requires a reload.</p></div>
+      <div className="help-dialog__head"><div><span className="library-panel__eyebrow">{t(helpPage==='First mix'?'Learn by doing':'Quick reference')}</span><h2 id="shortcut-title">{t(helpPage==='First mix'?'Your first mix':'Keyboard shortcuts')}</h2></div>
+        <button ref={closeHelpButton} type="button" aria-label={t("Close help")} onClick={() => setHelpOpen(false)}>{t("Close")}</button></div>
+      <nav className="help-pages" aria-label={t("Help topics")}>{['First mix','Controls','Shortcuts','Local audio'].map(topic=><button key={topic} type="button" aria-pressed={helpPage===topic} onClick={()=>setHelpPage(topic)}>{t(topic)}</button>)}</nav>
+      <div hidden={helpPage!=='Shortcuts'}><dl className="shortcut-list"><div><dt><kbd>{t("Space")}</kbd></dt><dd>{t("Play or pause the focused deck")}</dd></div>
+        <div><dt><kbd>{t("Q")}</kbd></dt><dd>{t("Return to that deck’s cue point")}</dd></div>
+        <div><dt><kbd>1</kbd>–<kbd>8</kbd></dt><dd>{t("Set or trigger hot cues on the focused deck")}</dd></div>
+        <div><dt><kbd>{t("Shift")}</kbd> + <kbd>←</kbd>/<kbd>→</kbd></dt><dd>{t("Nudge tempo briefly")}</dd></div>
+        <div><dt><kbd>[</kbd>/<kbd>]</kbd></dt><dd>{t("Move the crossfader toward Deck A or B")}</dd></div>
+        <div><dt><kbd>?</kbd></dt><dd>{t("Open this shortcut reference")}</dd></div></dl>
+      <p>{t("Use Tab to focus a deck panel first. Shortcuts pause while you type or focus an interactive control.")}</p></div>
+      <div hidden={helpPage!=='First mix'}><GuidedMixMissions key={mixPair} snapshot={snapshot} completedTransitions={completedTransitions} run={run} loadDemos={loadEmptyDemoDecks} onOpenBpm={openTrackBpm} onNewRound={()=>setTransitionProgress({pair:mixPair,count:0})} onOpenCanvas={()=>{setHelpOpen(false);requestAnimationFrame(()=>{const toggle=document.querySelector<HTMLButtonElement>('[aria-label="'+t('Transition canvas')+'"]');if(toggle?.getAttribute('aria-pressed')==='false')toggle.click();document.querySelector<HTMLButtonElement>('[aria-label="'+t('Draw your transition')+'"]')?.focus({preventScroll:true});});}}/></div>
+      <div hidden={helpPage!=='Controls'}><p>{t("Turn a record to scratch; release to return to its previous playback mode. Hold Cue to preview from a paused cue point.")}</p><p>{t("Choose Echo, Room, Flanger, Tremolo or Drive in Effects. Hold and move on the pad to shape the sound. The pin keeps it on.")}</p><p>{t("Drag knobs vertically. Hold Shift for fine adjustment; double-click a continuous control to restore its default. Tempo changes speed. Tone lets you lower or raise the pitch separately.")}</p></div>
+      <div hidden={helpPage!=='Local audio'}><p>{t("Add or drop MP3, WAV or FLAC files. Use Session to save your work on this device before reloading.")}</p><p>{t("Audio starts after your first interaction. Suspend pauses the audio context; Resume restores it. A closed context requires a reload.")}</p></div>
     </dialog>
     </main>
   </>;

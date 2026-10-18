@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import type { AudioSnapshot, DeckId, EqBand } from '../../audio/types';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { cancelAllGestures } from '../../ui/gesture-registry';
@@ -44,12 +45,12 @@ function MixerAdjustment({ label, value, min, max, step, defaultValue, valueText
     onChange(Number(next.toFixed(precision)));
   };
 
-  return <div className="mixer-adjustment" role="group" aria-label={label}>
-    <div className="mixer-adjustment__readout"><span>{label}</span><output>{valueText}</output></div>
+  return <div className="mixer-adjustment" role="group" aria-label={t(label)}>
+    <div className="mixer-adjustment__readout"><span>{t(label)}</span><output>{t(valueText)}</output></div>
     <div className="mixer-adjustment__actions">
-      <button type="button" aria-label={'Decrease ' + label} title={'Decrease ' + label} disabled={disabled || value <= min} onClick={() => setStep(-1)}>−</button>
-      <button type="button" aria-label={'Increase ' + label} title={'Increase ' + label} disabled={disabled || value >= max} onClick={() => setStep(1)}>+</button>
-      <button type="button" aria-label={'Reset ' + label} title={'Reset ' + label} disabled={disabled || value === defaultValue} onClick={() => onChange(defaultValue)}>Reset</button>
+      <button type="button" aria-label={t('Decrease ' + label)} title={t('Decrease ' + label)} disabled={disabled || value <= min} onClick={() => setStep(-1)}>−</button>
+      <button type="button" aria-label={t('Increase ' + label)} title={t('Increase ' + label)} disabled={disabled || value >= max} onClick={() => setStep(1)}>+</button>
+      <button type="button" aria-label={t('Reset ' + label)} title={t('Reset ' + label)} disabled={disabled || value === defaultValue} onClick={() => onChange(defaultValue)}>{t("Reset")}</button>
     </div>
   </div>;
 }
@@ -92,7 +93,7 @@ export function Mixer({ snapshot, run, onOpenTools, onLearn, onTransitionComplet
     return () => window.removeEventListener('resize', focusOverlay);
   }, [fullControls]);
 
-  return <section ref={mixerSection} className={'mixer-console' + (!fullControls ? ' is-simple' : '')} aria-label="Mixer" onKeyDown={event=>{
+  return <section ref={mixerSection} className={'mixer-console' + (!fullControls ? ' is-simple' : '')} aria-label={t("Mixer")} onKeyDown={event=>{
     if(event.key==='Escape'&&fullControls){event.preventDefault();event.stopPropagation();closeFull();}
     if (event.key === 'Tab' && fullControls && getComputedStyle(event.currentTarget).position === 'fixed') {
       // Full is an overlay only on compact screens. Preserve ordinary tabbing
@@ -109,58 +110,58 @@ export function Mixer({ snapshot, run, onOpenTools, onLearn, onTransitionComplet
     }
   }}>
     <div className="mixer-console__heading">
-      <h2 className="visually-hidden">Mixer</h2>
-      <ToggleButton className="mixer-mode" aria-label="Transition canvas" pressed={canvasOpen} onClick={()=>{cancelAllGestures();setFullControls(false);setCanvasOpen(current=>!current);}}>Canvas</ToggleButton>
-      <ToggleButton ref={fullButton} className="mixer-mode mixer-view-toggle" aria-label="Full mixer controls" aria-expanded={fullControls} aria-controls="mixer-core" title="Show all mixer controls" pressed={fullControls} onClick={() => {
+      <h2 className="visually-hidden">{t("Mixer")}</h2>
+      <ToggleButton className="mixer-mode" aria-label={t("Transition canvas")} pressed={canvasOpen} onClick={()=>{cancelAllGestures();setFullControls(false);setCanvasOpen(current=>!current);}}>{t("Canvas")}</ToggleButton>
+      <ToggleButton ref={fullButton} className="mixer-mode mixer-view-toggle" aria-label={t("Full mixer controls")} aria-expanded={fullControls} aria-controls="mixer-core" title={t("Show all mixer controls")} pressed={fullControls} onClick={() => {
         if(fullControls){closeFull();return;}
         cancelAllGestures();returnToCanvas.current=canvasOpen;setCanvasOpen(false);setFullControls(true);
-      }}>Full</ToggleButton>
-      {fullControls && <button type="button" className="mixer-close" aria-label="Close full mixer controls" title="Close full mixer controls · Esc" onClick={closeFull}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>}
+      }}>{t("Full")}</ToggleButton>
+      {fullControls && <button type="button" className="mixer-close" aria-label={t("Close full mixer controls")} title={t("Close full mixer controls · Esc")} onClick={closeFull}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>}
       <div className="mixer-console__deck-headings" aria-hidden="true">
-        <span className="deck-a-text">A</span><span className="deck-b-text">B</span>
+        <span className="deck-a-text">{t("A")}</span><span className="deck-b-text">{t("B")}</span>
       </div>
-      <button type="button" className="mixer-console__tools-entry" aria-label="Mixer settings" title="Mixer settings" onClick={onOpenTools}>•••</button>
+      <button type="button" className="mixer-console__tools-entry" aria-label={t("Mixer settings")} title={t("Mixer settings")} onClick={onOpenTools}>•••</button>
     </div>
 
     <div id="mixer-core" className={'mixer-console__core'+(canvasOpen?' has-transition-canvas':'')}>
     {canvasOpen ? <TransitionCanvas snapshot={snapshot} run={run} onLearn={onLearn} onComplete={onTransitionComplete}/> : <>
-    <span className="mixer-volume-caption" aria-hidden="true">Volume</span>
-    <div className="mixer-labels" aria-hidden="true">{['Gain','High','Mid','Low','Filter'].map(label=><span key={label}>{label}</span>)}</div>
-    <div className="mixer-console__channels" aria-label="Tone controls">
+    <span className="mixer-volume-caption" aria-hidden="true">{t("Volume")}</span>
+    <div className="mixer-labels" aria-hidden="true">{['Gain','High','Mid','Low','Filter'].map(label=><span key={label}>{t(label)}</span>)}</div>
+    <div className="mixer-console__channels" aria-label={t("Tone controls")}>
       {(['A', 'B'] as const).map(id => {
         const deck = snapshot.decks[id];
-        return <section className={'channel-strip channel-strip-' + id} aria-label={'Tone controls for Deck ' + id} key={id}>
-          <Knob className="channel-strip__tone-control" label={'Gain '+id} displayLabel="Gain" value={deck.gainDb} min={-24} max={12} step={0.5} defaultValue={-3} disabled={!deck.track}
+        return <section className={'channel-strip channel-strip-' + id} aria-label={t('Tone controls for Deck ' + id)} key={id}>
+          <Knob className="channel-strip__tone-control" label={t('Gain '+id)} displayLabel={t("Gain")} value={deck.gainDb} min={-24} max={12} step={0.5} defaultValue={-3} disabled={!deck.track}
             valueText={n=>n.toFixed(1)+' dB'} onChange={n=>run(()=>engine.setGainDb(id,n))} />
-          {EQ_BANDS.map(({ band, label }) => <Knob key={band} className="channel-strip__tone-control" label={label + ' ' + id} displayLabel={band === 'high' ? 'Treble' : band === 'low' ? 'Bass' : 'Mid'}
+          {EQ_BANDS.map(({ band, label }) => <Knob key={band} className="channel-strip__tone-control" label={t(label + ' ' + id)} displayLabel={t(band === 'high' ? 'Treble' : band === 'low' ? 'Bass' : 'Mid')}
             value={deck.eqDb[band]} min={-24} max={6} step={0.5} defaultValue={0} unit=" dB" disabled={!deck.track}
             valueText={number => number.toFixed(1) + ' dB'} onChange={value => changeEq(id, band, value)} />)}
-          <Knob className="channel-strip__tone-control" label={'Filter ' + id} displayLabel="Filter" value={deck.filterValue} min={-1} max={1} step={0.01} defaultValue={0} disabled={!deck.track}
+          <Knob className="channel-strip__tone-control" label={t('Filter ' + id)} displayLabel={t("Filter")} value={deck.filterValue} min={-1} max={1} step={0.01} defaultValue={0} disabled={!deck.track}
             valueText={filterText}
             onChange={value => run(() => engine.setFilter(id, value))} />
         </section>;
       })}
     </div>
 
-    <div className="mixer-console__volumes" aria-label="Channel volumes">
+    <div className="mixer-console__volumes" aria-label={t("Channel volumes")}>
       {(['A', 'B'] as const).map(id => <LinearControl key={id} className={'channel-strip__fader channel-strip__fader-' + id}
-        label={'Volume ' + id} value={snapshot.decks[id].volume} min={0} max={1} step={0.01} defaultValue={1} orientation="vertical"
+        label={t('Volume ' + id)} value={snapshot.decks[id].volume} min={0} max={1} step={0.01} defaultValue={1} orientation="vertical"
         disabled={!snapshot.decks[id].track} valueText={value => Math.round(value * 100) + '%'}
         onChange={value => run(() => engine.setVolume(id, value))} />)}
     </div>
 
     </>}
     </div>
-    <button className="mixer-shared-transport" type="button" disabled={!ready} aria-label={bothPlaying?'Pause both decks':'Play both decks'} onClick={()=>{cancelAllGestures();run(()=>bothPlaying?engine.pauseDecks():engine.playDecks());}}><Icon name={bothPlaying?'pause':'play'}/>{bothPlaying?'Pause both':'Play both'}</button>
+    <button className="mixer-shared-transport" type="button" disabled={!ready} aria-label={t(bothPlaying?'Pause both decks':'Play both decks')} onClick={()=>{cancelAllGestures();run(()=>bothPlaying?engine.pauseDecks():engine.playDecks());}}><Icon name={bothPlaying?'pause':'play'}/>{t(bothPlaying?'Pause both':'Play both')}</button>
     <div className="mixer-console__crossfader">
-      <span className="blend-caption" aria-hidden="true" data-direction={snapshot.mixer.crossfader < 0.45 ? 'A' : snapshot.mixer.crossfader > 0.55 ? 'B' : 'centre'}>{snapshot.mixer.crossfader < 0.45 ? '← More A' : snapshot.mixer.crossfader > 0.55 ? 'More B →' : 'Blend the tracks'}</span>
-      <div className="mixer-console__crossfader-summary"><span>Curve</span><strong>{snapshot.mixer.crossfaderCurve === 'mix' ? 'Mix' : 'Cut'}</strong></div>
-      <LinearControl className="crossfader-control" label="Crossfader" value={snapshot.mixer.crossfader} min={0} max={1} step={0.005} defaultValue={0.5}
-        lowLabel="A" highLabel="B" valueText={value => value === 0.5 ? 'Centre' : Math.round(value * 100) + '%'}
+      <span className="blend-caption" aria-hidden="true" data-direction={snapshot.mixer.crossfader < 0.45 ? 'A' : snapshot.mixer.crossfader > 0.55 ? 'B' : 'centre'}>{t(snapshot.mixer.crossfader < 0.45 ? '← More A' : snapshot.mixer.crossfader > 0.55 ? 'More B →' : 'Blend the tracks')}</span>
+      <div className="mixer-console__crossfader-summary"><span>{t("Curve")}</span><strong>{t(snapshot.mixer.crossfaderCurve === 'mix' ? 'Mix' : 'Cut')}</strong></div>
+      <LinearControl className="crossfader-control" label={t("Crossfader")} value={snapshot.mixer.crossfader} min={0} max={1} step={0.005} defaultValue={0.5}
+        lowLabel={t("A")} highLabel={t("B")} valueText={value => value === 0.5 ? 'Centre' : Math.round(value * 100) + '%'}
         onChange={value => run(() => engine.setCrossfader(value))} />
     </div>
 
-    <LinearControl className="master-control" label="Master" value={snapshot.mixer.masterVolume} min={0} max={1} step={0.01} defaultValue={1}
+    <LinearControl className="master-control" label={t("Master")} value={snapshot.mixer.masterVolume} min={0} max={1} step={0.01} defaultValue={1}
       valueText={value => Math.round(value * 100) + '%'} onChange={value => run(() => engine.setMasterVolume(value))} />
   </section>;
 }
@@ -169,10 +170,10 @@ export function MixerTools({ snapshot, run }: MixerToolsProps) {
   const [channel,setChannel]=useState<DeckId>('A');
   const [parameter,setParameter]=useState('Low');
   const [view,setView]=useState('Adjust');
-  return <section className="mixer-tools" aria-label="Mixer settings">
-    <div className="mixer-tools__navigation"><select aria-label="Mixer view" value={view} onChange={event=>setView(event.currentTarget.value)}><option>Adjust</option><option>Curve</option></select>
-      <select hidden={view!=='Adjust'} aria-label="Adjustment channel" value={channel} onChange={event=>setChannel(event.currentTarget.value as DeckId)}><option>A</option><option>B</option></select>
-      <select hidden={view!=='Adjust'} aria-label="Adjustment parameter" value={parameter} onChange={event=>setParameter(event.currentTarget.value)}>{['Gain','High','Mid','Low','Filter'].map(name=><option key={name}>{name}</option>)}</select>
+  return <section className="mixer-tools" aria-label={t("Mixer settings")}>
+    <div className="mixer-tools__navigation"><select aria-label={t("Mixer view")} value={view} onChange={event=>setView(event.currentTarget.value)}><option value={"Adjust"}>{t("Adjust")}</option><option value={"Curve"}>{t("Curve")}</option></select>
+      <select hidden={view!=='Adjust'} aria-label={t("Adjustment channel")} value={channel} onChange={event=>setChannel(event.currentTarget.value as DeckId)}><option value={"A"}>{t("A")}</option><option value={"B"}>{t("B")}</option></select>
+      <select hidden={view!=='Adjust'} aria-label={t("Adjustment parameter")} value={parameter} onChange={event=>setParameter(event.currentTarget.value)}>{['Gain','High','Mid','Low','Filter'].map(name=><option key={name} value={name}>{name}</option>)}</select>
     </div>
     <div className="mixer-tools__channels" hidden={view!=='Adjust'}>
       {(['A', 'B'] as const).map(id => {
@@ -183,8 +184,8 @@ export function MixerTools({ snapshot, run }: MixerToolsProps) {
           { label: 'Filter ' + id, value: deck.filterValue, min: -1, max: 1, step: 0.01, defaultValue: 0, valueText: filterText(deck.filterValue), disabled: !deck.track, onChange: value => run(() => engine.setFilter(id, value)) },
         ];
 
-        return <section className={'mixer-tools__channel mixer-tools__channel-' + id} hidden={channel!==id} key={id} aria-label={'Deck ' + id + ' adjustments'}>
-          <div className="mixer-tools__channel-heading"><h3>Deck {id}</h3>
+        return <section className={'mixer-tools__channel mixer-tools__channel-' + id} hidden={channel!==id} key={id} aria-label={t('Deck ' + id + ' adjustments')}>
+          <div className="mixer-tools__channel-heading"><h3>{t("Deck ")}{t(id)}</h3>
           </div>
           <div className="mixer-tools__adjustments">
             {adjustments.map(adjustment => <div key={adjustment.label} hidden={adjustment.label!==parameter+' '+channel}><MixerAdjustment {...adjustment} /></div>)}
@@ -194,10 +195,10 @@ export function MixerTools({ snapshot, run }: MixerToolsProps) {
     </div>
 
     <div className="mixer-tools__curve" hidden={view!=='Curve'}>
-      <div className="mixer-tools__section-heading"><h3>Crossfader curve</h3><span>Choose how the blend changes across the rail.</span></div>
-      <div className="curve-select" role="group" aria-label="Crossfader curve">
-        <ToggleButton aria-label="Crossfade mix curve" pressed={snapshot.mixer.crossfaderCurve === 'mix'} onClick={() => run(() => engine.setCrossfaderCurve('mix'))}>Mix</ToggleButton>
-        <ToggleButton aria-label="Crossfade cut curve" pressed={snapshot.mixer.crossfaderCurve === 'cut'} onClick={() => run(() => engine.setCrossfaderCurve('cut'))}>Cut</ToggleButton>
+      <div className="mixer-tools__section-heading"><h3>{t("Crossfader curve")}</h3><span>{t("Choose how the blend changes across the rail.")}</span></div>
+      <div className="curve-select" role="group" aria-label={t("Crossfader curve")}>
+        <ToggleButton aria-label={t("Crossfade mix curve")} pressed={snapshot.mixer.crossfaderCurve === 'mix'} onClick={() => run(() => engine.setCrossfaderCurve('mix'))}>{t("Mix")}</ToggleButton>
+        <ToggleButton aria-label={t("Crossfade cut curve")} pressed={snapshot.mixer.crossfaderCurve === 'cut'} onClick={() => run(() => engine.setCrossfaderCurve('cut'))}>{t("Cut")}</ToggleButton>
       </div>
     </div>
   </section>;

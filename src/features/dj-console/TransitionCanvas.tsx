@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { AudioSnapshot } from '../../audio/types';
 import { engine, getSnapshot } from '../../state/engine';
@@ -67,21 +68,21 @@ export function TransitionCanvas({ snapshot, run, onLearn, onComplete }: { snaps
     move((event.clientX-gesture.rect.left)/gesture.rect.width,1-(event.clientY-gesture.rect.top)/gesture.rect.height);
   }
   const visibleX=performing?point.x:snapshot.mixer.crossfader;
-  return <section className="transition-canvas" aria-label="Transition canvas">
-    <div className="transition-canvas__toolbar"><div className="transition-scenes" role="group" aria-label="Transition character">{scenes.map(item=><button key={item.id} type="button" aria-label={item.name+' transition'} aria-pressed={scene===item.id} title={item.hint} onClick={()=>{finish(true);setScene(item.id);}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={item.path}/></svg>{item.name}</button>)}</div><button className="transition-learn" type="button" aria-label="Guided mix missions" title="Guided mix · learn by doing" onClick={onLearn}><Icon name="question" /></button></div>
-    <button ref={surface} type="button" className={'transition-surface'+(performing?' is-performing':'')} aria-label="Draw your transition" aria-describedby="transition-instructions" aria-pressed={performing} disabled={!ready}
+  return <section className="transition-canvas" aria-label={t("Transition canvas")}>
+    <div className="transition-canvas__toolbar"><div className="transition-scenes" role="group" aria-label={t("Transition character")}>{scenes.map(item=><button key={item.id} type="button" aria-label={t(item.name+' transition')} aria-pressed={scene===item.id} title={t(item.hint)} onClick={()=>{finish(true);setScene(item.id);}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={item.path}/></svg>{t(item.name)}</button>)}</div><button className="transition-learn" type="button" aria-label={t("Guided mix missions")} title={t("Guided mix · learn by doing")} onClick={onLearn}><Icon name="question" /></button></div>
+    <button ref={surface} type="button" className={'transition-surface'+(performing?' is-performing':'')} aria-label={t("Draw your transition")} aria-describedby="transition-instructions" aria-pressed={performing} disabled={!ready}
       style={{'--canvas-x':visibleX*100+'%','--canvas-y':(1-point.y)*100+'%'} as React.CSSProperties}
       onPointerDown={event=>{if(event.button!==0||active.current)return;event.preventDefault();event.currentTarget.focus({preventScroll:true});if(!start(event.pointerId,event.currentTarget.getBoundingClientRect()))return;try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* Blur and cancellation still clean up the gesture. */}pointerMove(event);}}
       onPointerMove={pointerMove} onPointerUp={event=>finish(false,event.pointerId)} onPointerCancel={event=>finish(true,event.pointerId)} onLostPointerCapture={event=>finish(true,event.pointerId)}
       onKeyDown={event=>{if(event.code==='Space'){event.preventDefault();if(!event.repeat&&start(null,null))move(snapshot.mixer.crossfader,0.35);}else if(event.key==='Escape'){event.preventDefault();finish(true);}else if(active.current?.pointerId===null&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const step=event.shiftKey ? .01 : .05;move(position.current.x+(event.key==='ArrowRight'?step:event.key==='ArrowLeft'?-step:0),position.current.y+(event.key==='ArrowUp'?step:event.key==='ArrowDown'?-step:0));}}}
       onKeyUp={event=>{if(event.code==='Space'){event.preventDefault();finish();}}} onBlur={()=>{if(active.current?.pointerId===null)finish(true);}}>
       <svg className="transition-trace" viewBox="0 0 240 120" preserveAspectRatio="none" aria-hidden="true"><path className="transition-guide" d="M10 110C65 110 70 20 120 20S175 110 230 110"/><polyline points={trace.join(' ')}/></svg>
-      <span className="transition-axis transition-axis--a" aria-hidden="true">A</span><span className="transition-axis transition-axis--b" aria-hidden="true">B</span>
-      <span className="transition-surface__character" aria-hidden="true">{scenes.find(item=>item.id===scene)?.hint}</span>
+      <span className="transition-axis transition-axis--a" aria-hidden="true">{t("A")}</span><span className="transition-axis transition-axis--b" aria-hidden="true">{t("B")}</span>
+      <span className="transition-surface__character" aria-hidden="true">{t(scenes.find(item=>item.id===scene)?.hint)}</span>
       <i className="transition-cursor" aria-hidden="true"/>
       <svg className="transition-gesture-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 19h20M6 19l4-4m-4 4 4 4m16-4-4-4m4 4-4 4M16 19V5m0 0-4 4m4-4 4 4" /></svg>
-      <span className="transition-surface__hint">{!ready?'Add two tracks':performing?'Mixing':'Drag to mix'}</span>
+      <span className="transition-surface__hint">{t(!ready?'Add two tracks':performing?'Mixing':'Drag to mix')}</span>
     </button>
-    <span id="transition-instructions" className="visually-hidden">Hold and drag: left/right blends A and B, up adds the chosen effect. Release restores your previous tone and effect settings and keeps the blend. Hold Space and use arrow keys on the keyboard. Escape cancels and restores the blend too.</span>
+    <span id="transition-instructions" className="visually-hidden">{t("Hold and drag: left/right blends A and B, up adds the chosen effect. Release restores your previous tone and effect settings and keeps the blend. Hold Space and use arrow keys on the keyboard. Escape cancels and restores the blend too.")}</span>
   </section>;
 }
