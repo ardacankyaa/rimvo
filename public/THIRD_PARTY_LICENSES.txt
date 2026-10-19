@@ -1,11 +1,11 @@
 RIMVO distribution notices
 
 PROJECT-AUTHORED SOURCE CODE — MIT
-Music/artwork and third-party packages are excluded from this project copyright.
+Bundled demo music/artwork and third-party packages retain their separate notices.
 
 MIT License
 
-Copyright (c) 2026 RIMVO contributors
+Copyright (c) 2026 Arda Çankaya and RIMVO contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -96,10 +96,14 @@ Core copyright: Olli Parviainen, Ryan Berdeen, Jakub Fiala, Steve 'Cutter' Blade
 Original package notices: licenses/soundtouch-core-NOTICE.txt and licenses/soundtouch-lanczos-NOTICE.txt
 Full license: licenses/MPL-2.0.txt
 Upstream source: https://github.com/cutterbl/SoundTouchJS
-Exact published packages (including original source/notice contents):
+Exact published packages:
 https://registry.npmjs.org/@soundtouchjs/core/-/core-2.1.1.tgz
 https://registry.npmjs.org/@soundtouchjs/interpolation-strategy-lanczos/-/interpolation-strategy-lanczos-2.1.1.tgz
 No upstream code modifications. These packages retain MPL-2.0 independently of the project MIT license.
+Preferred TypeScript sources and original package notices are available in:
+source/soundtouchjs-2.1.1-source.tar.gz
+Verified publishing commit: 8d19a91524c578f9ac414c7e7db2a5a1a605ff12
+Source/provenance, checksums and rebuild information: SOURCE_CODE.md and source/manifest.json
 
 MP3 EXPORT — LGPL-3.0
 
@@ -109,6 +113,11 @@ Source: https://github.com/shijinyu/lamejs
 Upstream: https://github.com/zhuker/lamejs
 LAME project: https://lame.sourceforge.net/
 License text: https://www.gnu.org/licenses/lgpl-3.0.html
+Included full license texts: licenses/LGPL-3.0.txt and licenses/GPL-3.0.txt
+Original package notice: licenses/lamejs-NOTICE.txt
+Preferred JavaScript sources and build files: source/lamejs-1.2.7-source.tar.gz
+Verified publishing commit: 1fb0ef5fa177413107e2e107d054a9b994e3f79c
+Source/provenance, checksums and recombination instructions: SOURCE_CODE.md and source/manifest.json
 
 The application's MIT license does not replace this dependency's license.
 This notice is also available in THIRD-PARTY-NOTICES.txt.

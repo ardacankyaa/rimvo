@@ -4,5 +4,10 @@ Source: https://github.com/shijinyu/lamejs
 Upstream: https://github.com/zhuker/lamejs
 LAME project: https://lame.sourceforge.net/
 License text: https://www.gnu.org/licenses/lgpl-3.0.html
+Included full license texts: licenses/LGPL-3.0.txt and licenses/GPL-3.0.txt
+Original package notice: licenses/lamejs-NOTICE.txt
+Preferred JavaScript sources and build files: source/lamejs-1.2.7-source.tar.gz
+Verified publishing commit: 1fb0ef5fa177413107e2e107d054a9b994e3f79c
+Source/provenance, checksums and recombination instructions: SOURCE_CODE.md and source/manifest.json
 
 The application's MIT license does not replace this dependency's license.

@@ -75,6 +75,7 @@ Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, m
 | `npm run test:e2e` | Runs real-browser workflows in Chromium, WebKit and mobile Chromium |
 | `npm run lint` | Lints source files with ESLint |
 | `npm run typecheck`| Validates TypeScript types across the codebase |
+| `npm run check:licenses` | Verifies author notices, dependency sources and license-file integrity; add `-- --dist` after building |
 
 The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), unit/DSP tests and browser workflows on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes. Before running browser tests locally, install their runtimes with `npx playwright install chromium webkit` (Linux CI also uses `--with-deps`). Browser tests use isolated disposable contexts and the bundled test audio fixtures.
 
@@ -114,6 +115,8 @@ RIMVO processes your audio on your device and does not upload personal music or 
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).  
+Project-authored application and test code is licensed under the [MIT License](LICENSE), copyright 2026 Arda Çankaya and RIMVO contributors. Preserve the copyright and MIT permission notice when redistributing copies or substantial portions. The MIT grant is unchanged. See [reuse and indexing guidance](ATTRIBUTION.md) for file-level attribution and exclusions.
 Bundled demo tracks and artwork are dedicated to the public domain under [CC0 1.0 Universal](public/demo-tracks/LICENSE.txt).
 Dependencies and generic interface icons retain their own licenses and attribution. See the [distribution notices](public/THIRD_PARTY_LICENSES.txt), including the MP3 encoder's LGPL-3.0 notice. Dependency names, copyright notices, and compatibility identifiers identify technical components; the application's name and visual identity are RIMVO.
+
+The public distribution includes full [LGPL-3.0](public/licenses/LGPL-3.0.txt) and [GPL-3.0](public/licenses/GPL-3.0.txt) texts, preferred dependency sources, their original notices, pinned provenance and checksums. [Source and rebuild instructions](public/SOURCE_CODE.md) explain how to rebuild the MP3 encoder and recombine it with the MIT application. The source archives keep their upstream licenses; they are not relicensed as MIT. Run `npm run check:licenses` to verify the distribution materials, or `npm run check:licenses -- --dist` after building.

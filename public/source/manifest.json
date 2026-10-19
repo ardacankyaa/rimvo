@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "applicationSource": {
+    "repository": "https://github.com/ardacankyaa/rimvo",
+    "commit": "95a7980580fcb62475be6e8f57850d03552beeb9",
+    "runtimeSha256": "5e18e378a3d3f31ec64474549471c0b344bda47edef3d565e7dd85807504a666",
+    "runtimeDigestFormat": "SHA-256 of sorted src/** regular files, index.html, vite.config.ts and package-lock.json; each relative POSIX path + NUL + UTF-8 content with CRLF normalized to LF + NUL"
+  },
+  "components": [
+    {
+      "name": "@breezystack/lamejs",
+      "version": "1.2.7",
+      "license": "LGPL-3.0",
+      "sourceCommit": "1fb0ef5fa177413107e2e107d054a9b994e3f79c",
+      "sourceArchive": "source/lamejs-1.2.7-source.tar.gz",
+      "upstreamSource": "https://github.com/shijinyu/lamejs/tree/1fb0ef5fa177413107e2e107d054a9b994e3f79c",
+      "packageUrl": "https://registry.npmjs.org/@breezystack/lamejs/-/lamejs-1.2.7.tgz",
+      "provenance": "https://registry.npmjs.org/@breezystack%2flamejs/1.2.7 (gitHead)"
+    },
+    {
+      "name": "@soundtouchjs/core",
+      "version": "2.1.1",
+      "license": "MPL-2.0",
+      "sourceCommit": "8d19a91524c578f9ac414c7e7db2a5a1a605ff12",
+      "sourceArchive": "source/soundtouchjs-2.1.1-source.tar.gz",
+      "upstreamSource": "https://github.com/cutterbl/SoundTouchJS/tree/8d19a91524c578f9ac414c7e7db2a5a1a605ff12",
+      "packageUrl": "https://registry.npmjs.org/@soundtouchjs/core/-/core-2.1.1.tgz",
+      "provenance": "https://registry.npmjs.org/-/npm/v1/attestations/@soundtouchjs%2fcore@2.1.1"
+    },
+    {
+      "name": "@soundtouchjs/interpolation-strategy-lanczos",
+      "version": "2.1.1",
+      "license": "MPL-2.0",
+      "sourceCommit": "8d19a91524c578f9ac414c7e7db2a5a1a605ff12",
+      "sourceArchive": "source/soundtouchjs-2.1.1-source.tar.gz",
+      "upstreamSource": "https://github.com/cutterbl/SoundTouchJS/tree/8d19a91524c578f9ac414c7e7db2a5a1a605ff12",
+      "packageUrl": "https://registry.npmjs.org/@soundtouchjs/interpolation-strategy-lanczos/-/interpolation-strategy-lanczos-2.1.1.tgz",
+      "provenance": "https://registry.npmjs.org/-/npm/v1/attestations/@soundtouchjs%2finterpolation-strategy-lanczos@2.1.1"
+    }
+  ],
+  "files": [
+    {
+      "path": "source/lamejs-1.2.7-source.tar.gz",
+      "bytes": 138019,
+      "sha256": "646234fc1c351c8763daa02ae3f35a7c24d76552f8bb8c2ae62f9a9ed6d973b1"
+    },
+    {
+      "path": "source/soundtouchjs-2.1.1-source.tar.gz",
+      "bytes": 216589,
+      "sha256": "5d7d344cc9f80adf9370a9279556ced28ff2ef5d4f9a2b5faf71ede88537c512"
+    },
+    {
+      "path": "licenses/GPL-3.0.txt",
+      "bytes": 34674,
+      "sha256": "fb981668c18a279e285fc4d83fba1e836cc84dd4daa73c9697d3cfd2d8aca6e0"
+    },
+    {
+      "path": "licenses/lamejs-NOTICE.txt",
+      "bytes": 424,
+      "sha256": "cd144ca132e3842b01f5ed2d6f3a32141e24a1cc15e115aa5f19a2294ce0a379"
+    },
+    {
+      "path": "licenses/LGPL-3.0.txt",
+      "bytes": 42098,
+      "sha256": "996af0513df21f7496288951c41428a03c174e9e4a9d63665c57d670f845ccb1"
+    },
+    {
+      "path": "licenses/MPL-2.0.txt",
+      "bytes": 15920,
+      "sha256": "812e9d96e900a093ae4d1d3f22c5f82f568a0a0461c3007a99d00573d41c5461"
+    },
+    {
+      "path": "licenses/soundtouch-core-NOTICE.txt",
+      "bytes": 284,
+      "sha256": "753801acf995db0807e9dab615775310b1f74696e7776ee246bf9b31714cdaf9"
+    },
+    {
+      "path": "licenses/soundtouch-lanczos-NOTICE.txt",
+      "bytes": 284,
+      "sha256": "753801acf995db0807e9dab615775310b1f74696e7776ee246bf9b31714cdaf9"
+    }
+  ]
+}

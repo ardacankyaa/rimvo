@@ -16,7 +16,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:licenses": "node scripts/check-licenses.mjs"
   },
   "dependencies": {
     "@breezystack/lamejs": "1.2.7",

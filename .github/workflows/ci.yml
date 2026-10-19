@@ -34,6 +34,8 @@ jobs:
         run: npm run lint
       - name: Typecheck and build
         run: npm run build -- --base=/rimvo/
+      - name: Verify distributed licenses and sources
+        run: npm run check:licenses -- --dist
       - name: Test
         run: npm test
       - name: Package public site
