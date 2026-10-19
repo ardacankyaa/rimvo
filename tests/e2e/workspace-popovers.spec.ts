@@ -76,19 +76,30 @@ test('keyboard focus outside closes the workspace panel and Help still dismisses
 test('closing the headphone panel leaves monitoring running', async ({ page }) => {
   // The physical output and its playback are the only doubles; the monitor stream
   // still comes from the application's real Web Audio engine.
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
   await page.addInitScript(() => {
+    // Linux WebKit can expose Web Audio without native output-selection APIs.
+    // Exercise that absence everywhere so the fixture cannot depend on them.
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
     const output = { deviceId: 'test-headphones', groupId: 'test-output', kind: 'audiooutput', label: 'Test headphones', toJSON() { return {}; } };
-    Object.defineProperty(navigator.mediaDevices, 'selectAudioOutput', { configurable: true, value: async () => output });
-    Object.defineProperty(navigator.mediaDevices, 'enumerateDevices', { configurable: true, value: async () => [output] });
+    const media = Object.assign(new EventTarget(), {
+      selectAudioOutput: async () => output,
+      enumerateDevices: async () => [output],
+    });
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: media });
     Object.defineProperty(HTMLMediaElement.prototype, 'setSinkId', { configurable: true, value: async function () {} });
     Object.defineProperty(HTMLMediaElement.prototype, 'play', { configurable: true, value: async function () {} });
   });
   await page.goto('/');
+  expect(pageErrors).toEqual([]);
   const audioAvailable = await page.evaluate(() => typeof AudioContext !== 'undefined');
   test.skip(process.platform === 'win32' && test.info().project.name === 'webkit' && !audioAvailable, 'Windows WebKit does not expose Web Audio; Linux CI exercises this workflow.');
   const headphones = page.getByRole('button', { name: 'Headphone monitoring', exact: true });
   await headphones.click();
-  await page.getByRole('button', { name: 'Choose headphone output', exact: true }).click();
+  const chooseOutput = page.getByRole('button', { name: 'Choose headphone output', exact: true });
+  await expect(chooseOutput).toBeVisible();
+  await chooseOutput.click();
   await page.getByRole('button', { name: 'Start headphone monitoring', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Stop headphone monitoring', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
@@ -97,4 +108,5 @@ test('closing the headphone panel leaves monitoring running', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Headphone cue A', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Stop headphone monitoring', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Start headphone monitoring', exact: true })).toBeVisible();
+  expect(pageErrors).toEqual([]);
 });
