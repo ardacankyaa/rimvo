@@ -21,6 +21,17 @@ export function t<T>(value: T): T {
   if (language === 'en') return (Object.hasOwn(english, text) ? value.replace(text, english[text]) : value) as T;
   const direct = Object.hasOwn(turkish, text) ? turkish[text] : undefined;
   if (direct) return value.replace(text, direct) as T;
+  // Only translate the application's wrapper and known diagnostics. The title
+  // and unknown browser diagnostics may contain user data and stay verbatim.
+  const loadFailure = text.match(/^Could not load (.+) into Deck ([AB])\.(?: (.+))?$/s);
+  if (loadFailure) {
+    const [, name, id, cause] = loadFailure;
+    const subject = name === 'the selected file' ? 'Seçilen dosya' : name === 'the selected track' ? 'Seçilen parça' : `${name},`;
+    const detail = cause && Object.hasOwn(turkish, cause) ? turkish[cause] : cause;
+    return `${subject} ${id} kanalına yüklenemedi.${detail ? ` ${detail}` : ''}` as T;
+  }
+  const download = text.match(/^Download requested: (.+)$/s);
+  if (download) return `İndirme istendi: ${download[1]}` as T;
   const deck = text.match(/^(.*?)(?: ([AB]))$/);
   if (deck && turkish[deck[1]]) return `${turkish[deck[1]]} ${deck[2]}` as T;
   const effect = text.match(/^(Select|Hold|Keep|Enable) (Echo|Room|Flanger|Tremolo|Drive) ([AB])$/);

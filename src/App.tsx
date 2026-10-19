@@ -17,6 +17,7 @@ import type { LegalPage } from './legal/policies';
 import { readThemePreference, writeThemePreference } from './legal/preference-storage';
 import { SessionControls } from './session/SessionControls';
 import { HeadphoneControls } from './features/dj-console/HeadphoneControls';
+import { WorkspacePopoverProvider } from './ui/workspace-popover';
 import { setLanguage, t, useLanguage } from './i18n';
 const LegalPanel = lazy(() => import('./legal/LegalPanel').then(module => ({ default: module.LegalPanel })));
 
@@ -469,14 +470,14 @@ export default function App() {
         <button ref={helpOpener} type="button" className="shortcut-open" aria-label={t("Help and keyboard shortcuts")} aria-expanded={helpOpen} onClick={event => {helpReturnTarget.current=event.currentTarget;setHelpOpen(true);}}><Icon name="question" /><span>{t("Help")}</span></button>
       </div>
     </header>
-    <section className="workspace-tools" aria-label={t('Workspace tools')}>
+    <WorkspacePopoverProvider><section className="workspace-tools" aria-label={t('Workspace tools')}>
       <SessionControls assignments={{ A: entryA?.id ?? null, B: entryB?.id ?? null }} onRestored={assignments => {
         setTrackAssignment({ A: assignments.A ? { trackId: assignments.A, revision: getSnapshot().decks.A.revision } : null,
           B: assignments.B ? { trackId: assignments.B, revision: getSnapshot().decks.B.revision } : null });
       }} />
       <HeadphoneControls />
       <label className="language-control"><span>{t('Language')}</span><select aria-label={t('Language')} value={language} onChange={event => setLanguage(event.target.value as 'en' | 'tr')}><option value="en">{t("EN")}</option><option value="tr">{t("TR")}</option></select></label>
-    </section>
+    </section></WorkspacePopoverProvider>
     <section className={'waveform-bank' + (!snapshot.decks.A.track && !snapshot.decks.B.track ? ' waveform-bank--welcome' : '')} aria-label={t("Deck waveforms")}>
       {!snapshot.decks.A.track && !snapshot.decks.B.track ? <div className="first-session" role="region" aria-label={t("Start your first mix")}>
         <div className="first-session__records" aria-hidden="true">{['demo-after-hours','demo-open-circuit'].map((trackId,index) => <span key={trackId}>{trackById.get(trackId)?.artworkUrl ? <img src={trackById.get(trackId)!.artworkUrl!} alt="" /> : <i>{t(index === 0 ? 'A' : 'B')}</i>}</span>)}</div>

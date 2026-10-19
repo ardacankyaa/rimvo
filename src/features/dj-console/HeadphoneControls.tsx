@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { engine } from '../../state/engine';
 import type { DeckId } from '../../audio/types';
 import { t } from '../../i18n';
+import { useWorkspacePopover } from '../../ui/workspace-popover';
 
 type OutputDevices = MediaDevices & { selectAudioOutput?: () => Promise<MediaDeviceInfo> };
 export function HeadphoneControls() {
-  const [open, setOpen] = useState(false), [active, setActive] = useState(false), [busy, setBusy] = useState(false);
+  const { open, panelId, openerRef, panelRef, toggle, close } = useWorkspacePopover();
+  const [active, setActive] = useState(false), [busy, setBusy] = useState(false);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]), [output, setOutput] = useState(''), [notice, setNotice] = useState('');
   const [cue, setCue] = useState<Record<DeckId, boolean>>({ A: false, B: false });
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -38,15 +40,15 @@ export function HeadphoneControls() {
     finally { setBusy(false); }
   }
   function select(id: DeckId) { try { engine.setHeadphoneCue(id, !cue[id]); setCue(current => ({ ...current, [id]: !current[id] })); } catch (cause) { setNotice(cause instanceof Error ? cause.message : String(cause)); } }
-  return <div className="workspace-control"><button type="button" aria-label={t('Headphone monitoring')} aria-expanded={open} onClick={() => setOpen(value => !value)}>{t('Headphones')}</button>
-    {open && <section className="workspace-popover" aria-label={t('Headphone monitoring')}><h2>{t('Headphones')}</h2><p>{t('Listen before the crossfader on a separate output. This signal is never added to the master recording. Choose a different device from your main speakers.')}</p>
+  return <div className="workspace-control"><button ref={openerRef} type="button" aria-label={t('Headphone monitoring')} aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={toggle}>{t('Headphones')}</button>
+    {open && <section ref={panelRef} id={panelId} className="workspace-popover" aria-label={t('Headphone monitoring')}><h2>{t('Headphones')}</h2><p>{t('Listen before the crossfader on a separate output. This signal is never added to the master recording. Choose a different device from your main speakers.')}</p>
       {!supported ? <p role="status">{t('Separate headphone output is not supported in this browser. The main mixer still works.')}</p> : <>
         <button type="button" disabled={busy || active} onClick={() => void choose()}>{t('Choose headphone output')}</button>
         <label>{t('Headphone output')}<select aria-label={t('Headphone output')} value={output} disabled={active} onChange={event => setOutput(event.target.value)}><option value="">{t('Choose an output')}</option>{devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `${t('Output')} ${index + 1}`}</option>)}</select></label>
         <button type="button" disabled={busy || !output} onClick={() => active ? stop() : void start()}>{t(active ? 'Stop headphone monitoring' : 'Start headphone monitoring')}</button>
         {(['A', 'B'] as const).map(id => <button type="button" key={id} aria-label={t('Headphone cue') + ' ' + id} aria-pressed={cue[id]} disabled={!active} onClick={() => select(id)}>{t('Listen to deck')} {id}</button>)}
       </>}
-      <p role="status">{t(notice)}</p><button type="button" onClick={() => setOpen(false)}>{t('Close')}</button>
+      <p role="status">{t(notice)}</p><button type="button" onClick={() => close()}>{t('Close')}</button>
     </section>}
   </div>;
 }

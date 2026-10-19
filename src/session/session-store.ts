@@ -18,6 +18,27 @@ type StoredSession = Omit<SavedSession, 'tracks' | 'recording'> & {
   recordingType: string;
 };
 
+export class InvalidSessionError extends Error {
+  constructor(cause: unknown) { super('The saved session is invalid.', { cause }); this.name = 'InvalidSessionError'; }
+}
+
+const SESSION_CHANNEL = 'rimvo-session-changes';
+export function subscribeToSessionChanges(onChange: () => void): () => void {
+  if (typeof BroadcastChannel === 'undefined') return () => undefined;
+  try {
+    const channel = new BroadcastChannel(SESSION_CHANNEL);
+    channel.onmessage = onChange;
+    return () => channel.close();
+  } catch { return () => undefined; } // Focus/open refresh still works when channels are blocked.
+}
+function notifySessionChanged(): void {
+  if (typeof BroadcastChannel === 'undefined') return;
+  let channel: BroadcastChannel | undefined;
+  try { channel = new BroadcastChannel(SESSION_CHANNEL); channel.postMessage('changed'); }
+  catch { /* Notifications must never turn a completed storage write into a failure. */ }
+  finally { channel?.close(); }
+}
+
 async function encodeMedia(session: SavedSession): Promise<StoredSession> {
   // Some WebKit stores cannot persist Blob backing files. Binary structured
   // clones work across engines, and all async reads finish before the transaction.
@@ -110,6 +131,7 @@ export async function writeSession(session: SavedSession): Promise<void> {
       transaction.oncomplete = () => resolve();
       transaction.onabort = transaction.onerror = () => reject(new Error('The session could not be saved. Device storage may be full; the previous save is preserved.'));
     });
+    notifySessionChanged();
   } finally { db.close(); }
 }
 export async function readSession(): Promise<SavedSession | null> {
@@ -121,8 +143,10 @@ export async function readSession(): Promise<SavedSession | null> {
       request.onerror = () => reject(new Error('The saved session could not be read.'));
     });
     if (result === null) return null;
-    const decoded = decodeMedia(result);
-    validateSession(decoded); return decoded;
+    try {
+      const decoded = decodeMedia(result);
+      validateSession(decoded); return decoded;
+    } catch (cause) { throw new InvalidSessionError(cause); }
   } finally { db.close(); }
 }
 export async function deleteSession(): Promise<void> {
@@ -134,5 +158,6 @@ export async function deleteSession(): Promise<void> {
       transaction.oncomplete = () => resolve();
       transaction.onabort = transaction.onerror = () => reject(new Error('The saved session could not be deleted.'));
     });
+    notifySessionChanged();
   } finally { db.close(); }
 }
