@@ -11,6 +11,41 @@ export interface SavedSession {
   recording: Blob | null;
 }
 
+type StoredSession = Omit<SavedSession, 'tracks' | 'recording'> & {
+  mediaEncoding: 'array-buffer-v1';
+  tracks: (Omit<SavedSession['tracks'][number], 'file'> & { file: ArrayBuffer | null; fileType: string })[];
+  recording: ArrayBuffer | null;
+  recordingType: string;
+};
+
+async function encodeMedia(session: SavedSession): Promise<StoredSession> {
+  // Some WebKit stores cannot persist Blob backing files. Binary structured
+  // clones work across engines, and all async reads finish before the transaction.
+  const tracks = await Promise.all(session.tracks.map(async track => ({ ...track,
+    file: track.file ? await track.file.arrayBuffer() : null, fileType: track.file?.type ?? '' })));
+  return { ...session, mediaEncoding: 'array-buffer-v1', tracks,
+    recording: session.recording ? await session.recording.arrayBuffer() : null, recordingType: session.recording?.type ?? '' };
+}
+
+function decodeMedia(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || !('mediaEncoding' in value)) return value; // Earlier local saves used Blobs.
+  const stored = value as StoredSession;
+  if (stored.mediaEncoding !== 'array-buffer-v1' || !Array.isArray(stored.tracks) || stored.tracks.length > 200) throw new Error('The saved session is invalid.');
+  let size = 0;
+  const check = (buffer: unknown, max: number) => {
+    if (buffer === null) return;
+    if (!(buffer instanceof ArrayBuffer) || buffer.byteLength > max) throw new Error('The saved audio is invalid.');
+    size += buffer.byteLength;
+    if (size > SESSION_BYTE_LIMIT) throw new Error('The saved session exceeds its safe memory limit.');
+  };
+  check(stored.recording, SESSION_BYTE_LIMIT);
+  for (const track of stored.tracks) check(track?.file, 128 * 1024 * 1024);
+  return { version: stored.version, savedAt: stored.savedAt, decks: stored.decks, mixer: stored.mixer,
+    tracks: stored.tracks.map(track => ({ id: track.id, name: track.name, lastModified: track.lastModified,
+      file: track.file ? new Blob([track.file], { type: typeof track.fileType === 'string' ? track.fileType : '' }) : null })),
+    recording: stored.recording ? new Blob([stored.recording], { type: typeof stored.recordingType === 'string' ? stored.recordingType : 'audio/wav' }) : null };
+}
+
 export function validateSession(value: unknown): asserts value is SavedSession {
   if (!value || typeof value !== 'object') throw new Error('The saved session is invalid.');
   const session = value as SavedSession;
@@ -66,11 +101,12 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 export async function writeSession(session: SavedSession): Promise<void> {
   validateSession(session);
+  const stored = await encodeMedia(session);
   const db = await openDatabase();
   try {
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction('sessions', 'readwrite');
-      transaction.objectStore('sessions').put(session, 'latest');
+      transaction.objectStore('sessions').put(stored, 'latest');
       transaction.oncomplete = () => resolve();
       transaction.onabort = transaction.onerror = () => reject(new Error('The session could not be saved. Device storage may be full; the previous save is preserved.'));
     });
@@ -85,7 +121,8 @@ export async function readSession(): Promise<SavedSession | null> {
       request.onerror = () => reject(new Error('The saved session could not be read.'));
     });
     if (result === null) return null;
-    validateSession(result); return result;
+    const decoded = decodeMedia(result);
+    validateSession(decoded); return decoded;
   } finally { db.close(); }
 }
 export async function deleteSession(): Promise<void> {

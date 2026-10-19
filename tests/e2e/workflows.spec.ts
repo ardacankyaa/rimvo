@@ -94,8 +94,9 @@ test('language switch updates labels, persists and fits the viewport', async ({ 
 test('local WAV, MP3 and FLAC files load and a local track survives session restore', async ({ page }) => {
   await page.goto('/');
   await requireAudio(page);
-  for (const filename of ['m1-tone-440-stereo-48000-pcm16.wav', 'm1-tone-440-stereo-48000-vbr.mp3', 'm1-tone-440-stereo-48000.flac']) {
+  for (const [index, filename] of ['m1-tone-440-stereo-48000-pcm16.wav', 'm1-tone-440-stereo-48000-vbr.mp3', 'm1-tone-440-stereo-48000.flac'].entries()) {
     await page.getByLabel('Add local files', { exact: true }).setInputFiles(path.resolve('tests/fixtures', filename));
+    await expect(page.locator('.library-track-local')).toHaveCount(index + 1);
     const row = page.locator('.library-track-local').last();
     await row.locator('.library-load-button').first().click();
     await expect(page.getByRole('button', { name: 'Play/Pause A', exact: true })).toBeEnabled();
