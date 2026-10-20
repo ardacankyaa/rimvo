@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import type { DeckId, HotCueIndex } from './audio/types';
 import { engine, getSnapshot, subscribe } from './state/engine';
 import { createUiSnapshotReader } from './state/ui-snapshot';
-import { addLocalFiles, ensureDemoTracks, getLibrarySnapshot, loadLibraryTrack, removeLibraryTrack, subscribeLibrary, updateLibraryTrack } from './library/library';
+import { addLocalFiles, ensureDemoTracks, findLibraryTrackForFile, getLibrarySnapshot, loadLibraryTrack, removeLibraryTrack, subscribeLibrary, updateLibraryTrack } from './library/library';
 import { DeckPanel, DeckTools, type DeckToolTab } from './features/dj-console/DeckPanel';
 import { LibraryPanel } from './features/dj-console/LibraryPanel';
 import { Mixer, MixerTools } from './features/dj-console/Mixer';
@@ -326,7 +326,8 @@ export default function App() {
       if (request !== loadIntent.current[deckId]) return;
       await addLocalFiles([file],{analyze:false});
       if (request !== loadIntent.current[deckId]) return;
-      const entry = getLibrarySnapshot().find(track => track.file === file || (track.file?.name === file.name && track.file.size === file.size && track.file.lastModified === file.lastModified));
+      const entry = getLibrarySnapshot().find(track => track.file === file) ?? await findLibraryTrackForFile(file, file.name, file.lastModified);
+      if (request !== loadIntent.current[deckId]) return;
       if (!entry) throw new Error('The selected file could not be added to the local library.');
       await performLibraryLoad(entry.id, deckId, request, statusRequest);
     } catch (cause) {

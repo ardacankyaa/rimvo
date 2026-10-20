@@ -22,6 +22,7 @@ let analysisJob:{id:string;controller:AbortController}|null=null;
 let idleSubscription:(()=>void)|null=null;
 let snapshot: readonly LibraryTrack[] = Object.freeze([]), sequence = 0, epoch = 0;
 const listeners = new Set<() => void>(), urls = new Set<string>(), requests = new Set<AbortController>();
+const contentSamples = new WeakMap<Blob, Promise<readonly Uint8Array[]>>();
 const deckLoads = new Map<DeckId, {
     entryId: string;
     controller: AbortController;
@@ -32,7 +33,60 @@ const publish = (next: readonly LibraryTrack[]) => {
     for (const listener of listeners)
         listener();
 };
+const sampleRanges = (size: number): readonly (readonly [number, number])[] => {
+    const length = Math.min(size, 4096);
+    const starts = new Set([0, Math.max(0, Math.floor((size - length) / 2)), Math.max(0, size - length)]);
+    return [...starts].map(start => [start, start + length] as const);
+};
+function getContentSamples(file: Blob): Promise<readonly Uint8Array[]> {
+    let samples = contentSamples.get(file);
+    if (!samples) {
+        samples = Promise.all(sampleRanges(file.size).map(async ([start, end]) => new Uint8Array(await file.slice(start, end).arrayBuffer())));
+        contentSamples.set(file, samples);
+    }
+    return samples;
+}
+function equalSamples(a: readonly Uint8Array[], b: readonly Uint8Array[]): boolean {
+    return a.length === b.length && a.every((sample, index) => {
+        const other = b[index];
+        if (!other || sample.length !== other.length)
+            return false;
+        for (let offset = 0; offset < sample.length; offset++)
+            if (sample[offset] !== other[offset])
+                return false;
+        return true;
+    });
+}
+async function sameFileContents(a: Blob, b: Blob): Promise<boolean> {
+    if (a === b)
+        return true;
+    if (a.size !== b.size)
+        return false;
+    const [aSamples, bSamples] = await Promise.all([getContentSamples(a), getContentSamples(b)]);
+    if (!equalSamples(aSamples, bSamples))
+        return false;
+    const chunkSize = 64 * 1024;
+    for (let start = 0; start < a.size; start += chunkSize) {
+        const end = Math.min(a.size, start + chunkSize);
+        const [left, right] = await Promise.all([a.slice(start, end).arrayBuffer(), b.slice(start, end).arrayBuffer()]);
+        const leftBytes = new Uint8Array(left), rightBytes = new Uint8Array(right);
+        for (let offset = 0; offset < leftBytes.length; offset++)
+            if (leftBytes[offset] !== rightBytes[offset])
+                return false;
+    }
+    return true;
+}
+async function findMatchingFile(file: Blob, name: string, lastModified: number): Promise<LibraryTrack | undefined> {
+    const candidates = snapshot.filter(track => track.file?.name === name && track.file.size === file.size && track.file.lastModified === lastModified);
+    for (const track of candidates)
+        if (track.file && await sameFileContents(track.file, file))
+            return track;
+    return undefined;
+}
 export const getLibrarySnapshot = () => snapshot;
+export function findLibraryTrackForFile(file: Blob, name: string, lastModified: number): Promise<LibraryTrack | undefined> {
+    return findMatchingFile(file, name, lastModified);
+}
 export function subscribeLibrary(listener: () => void): () => void { listeners.add(listener); return () => listeners.delete(listener); }
 export function ensureDemoTracks(): void {
     const missing = demos.filter(d => !snapshot.some(t => t.id === d.id)).map(d => Object.freeze({ id: d.id, title: d.title, artist: d.artist, bpm: d.bpm, durationSeconds: d.durationSeconds, file: null, source: 'demo' as const, artworkUrl: base + 'demo-tracks/' + d.artwork, demoUrl: base + 'demo-tracks/' + d.asset }));
@@ -92,7 +146,7 @@ async function addBatch(files: readonly File[], generation: number, analyze:bool
             throw new Error('Choose local MP3, WAV or FLAC tracks.');
         if (file.size === 0 || file.size > 128 * 1024 * 1024)
             throw new Error('Choose a non-empty track below 128 MiB.');
-        if (snapshot.some(t => t.file?.name === file.name && t.file.size === file.size && t.file.lastModified === file.lastModified))
+        if (await findMatchingFile(file, file.name, file.lastModified))
             continue;
         if (snapshot.length >= 200)
             throw new Error('This session holds up to 200 tracks.');

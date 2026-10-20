@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DeckId, DeckSnapshot, HotCueIndex } from '../audio/types';
 import { engine, getSnapshot } from '../state/engine';
-import { addLocalFiles, ensureDemoTracks, getLibrarySnapshot, loadLibraryTrack } from '../library/library';
+import { addLocalFiles, ensureDemoTracks, findLibraryTrackForFile, getLibrarySnapshot, loadLibraryTrack } from '../library/library';
 import { deleteSession, InvalidSessionError, readSession, subscribeToSessionChanges, writeSession, type SavedSession, type SessionDeck } from './session-store';
 import { t } from '../i18n';
 import { useWorkspacePopover } from '../ui/workspace-popover';
@@ -91,8 +91,17 @@ export function SessionControls({ assignments, onRestored }: { assignments: Assi
     try {
       for (const id of ['A', 'B'] as const) {
         const settings = saved.decks[id], original = saved.tracks.find(track => track.id === settings.trackId);
-        if (!original) { if (getSnapshot().decks[id].track) await engine.unloadDeck(id); continue; }
-        const track = original.file ? getLibrarySnapshot().find(entry => entry.file?.name === original.name && entry.file.size === original.file!.size && entry.file.lastModified === original.lastModified) : getLibrarySnapshot().find(entry => entry.id === original.id);
+        if (!original) {
+          if (getSnapshot().decks[id].track) await engine.unloadDeck(id);
+          // Channel controls and FX remain valid without a loaded track, so keep
+          // their saved values ready for the next track assigned to this deck.
+          engine.setGainDb(id, settings.gainDb); engine.setFilter(id, settings.filterValue); engine.setVolume(id, settings.volume);
+          for (const band of ['low', 'mid', 'high'] as const) engine.setEqDb(id, band, settings.eqDb[band]);
+          engine.setQuantize(id, settings.quantize);
+          for (const type of ['delay', 'reverb', 'drive', 'flanger', 'tremolo'] as const) engine.setFx(id, { type, ...settings.fx[type] } as Parameters<typeof engine.setFx>[1]);
+          continue;
+        }
+        const track = original.file ? await findLibraryTrackForFile(original.file, original.name, original.lastModified) : getLibrarySnapshot().find(entry => entry.id === original.id);
         if (!track) throw new Error('A saved track could not be restored.');
         await loadLibraryTrack(track.id, id); mapped[id] = track.id;
         engine.setGainDb(id, settings.gainDb); engine.setFilter(id, settings.filterValue); engine.setVolume(id, settings.volume);

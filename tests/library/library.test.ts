@@ -8,11 +8,13 @@ type Api = {
         id: string;
         title: string;
         source: string;
+        file: File | null;
         durationSeconds: number | null;
         bpm: number | null;
         bpmStatus?:string;
     }[];
     addLocalFiles(files: readonly File[]): Promise<void>;
+    findLibraryTrackForFile(file: Blob, name: string, lastModified: number): Promise<{ id: string } | undefined>;
     removeLibraryTrack(id: string): void;
     loadLibraryTrack(id: string, deck: 'A' | 'B'): Promise<void>;
     ensureDemoTracks(): void;
@@ -41,6 +43,25 @@ describe('local-first session library', () => {
     it('aborts a removed file analysis and never resurrects its entry',async()=>{const a=await api();a.disposeLibrary();let finish!:(value:Awaited<ReturnType<typeof analysisMocks.analyzeFile>>)=>void;analysisMocks.analyzeFile.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));await a.addLocalFiles([new File(['RIFF'],'removed.wav')]);await vi.waitFor(()=>expect(analysisMocks.analyzeFile).toHaveBeenCalledOnce());const signal=analysisMocks.analyzeFile.mock.calls[0][1]!;a.removeLibraryTrack(a.getLibrarySnapshot()[0].id);expect(signal.aborted).toBe(true);finish({durationSeconds:8,bpmAnalysis:{status:'complete',confidence:.65,candidates:[{bpm:126,confidence:.65,firstBeatSeconds:0}]}});await Promise.resolve();await Promise.resolve();expect(a.getLibrarySnapshot()).toHaveLength(0);a.disposeLibrary();});
     it('deduplicates local files, publishes cached snapshots, and removes session references', async () => { const a = await api(); a.disposeLibrary(); const notify = vi.fn(); const off = a.subscribeLibrary(notify); const file = new File(['RIFF'], 'session.wav', { lastModified: 1 }); await a.addLocalFiles([file, file]); expect(a.getLibrarySnapshot()).toHaveLength(1); expect(a.getLibrarySnapshot()).toBe(a.getLibrarySnapshot()); expect(notify).toHaveBeenCalled(); a.removeLibraryTrack(a.getLibrarySnapshot()[0].id); expect(a.getLibrarySnapshot()).toHaveLength(0); off(); a.disposeLibrary(); });
     it('serializes concurrent additions of the same local file', async () => { const a = await api(); a.disposeLibrary(); const file = new File(['RIFF'], 'same.wav', { lastModified: 1 }); await Promise.all([a.addLocalFiles([file]), a.addLocalFiles([file])]); expect(a.getLibrarySnapshot()).toHaveLength(1); a.disposeLibrary(); });
+    it('keeps same-metadata files with different bytes separate and loads the chosen file into each deck', async () => {
+        const a = await api(); a.disposeLibrary();
+        const firstBytes = new Uint8Array(20_000).fill(65);
+        const secondBytes = new Uint8Array(firstBytes);
+        secondBytes[7000] = 66;
+        const first = new File([firstBytes], 'same.wav', { lastModified: 1 });
+        const second = new File([secondBytes], 'same.wav', { lastModified: 1 });
+        await a.addLocalFiles([first, second]);
+        const tracks = a.getLibrarySnapshot();
+        expect(tracks).toHaveLength(2);
+        const restored = await a.findLibraryTrackForFile(new Blob([secondBytes]), 'same.wav', 1);
+        expect(restored?.id).toBe(tracks[1].id);
+        await a.loadLibraryTrack(tracks[0].id, 'A');
+        await a.loadLibraryTrack(tracks[1].id, 'B');
+        expect(mocks.loadDeck.mock.calls.map(([deck, file]) => [deck, file])).toEqual([['A', first], ['B', second]]);
+        await a.addLocalFiles([new File([firstBytes], 'same.wav', { lastModified: 1 })]);
+        expect(a.getLibrarySnapshot()).toHaveLength(2);
+        a.disposeLibrary();
+    });
     it('loads through the public engine API and updates known duration', async () => { const a = await api(); a.disposeLibrary(); await a.addLocalFiles([new File(['RIFF'], 'session.wav')]); const id = a.getLibrarySnapshot()[0].id; await a.loadLibraryTrack(id, 'B'); expect(mocks.initializeFromGesture).toHaveBeenCalledOnce(); expect(mocks.loadDeck).toHaveBeenCalledWith('B', expect.any(File), { signal: expect.any(AbortSignal) }); expect(a.getLibrarySnapshot()[0].durationSeconds).toBe(8); a.disposeLibrary(); });
     it('prevents an earlier slow demo fetch from replacing a newer local selection', async () => {
         const a = await api();
