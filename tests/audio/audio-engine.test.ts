@@ -574,6 +574,46 @@ describe('BrowserAudioEngine M2 command boundaries', () => {
     await engine.dispose();
   });
 
+  it('restores a saved beat-loop region without recalculating it from a changed grid', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    await engine.loadDeck('A', new Blob(['tone']), { name: 'tone.wav' });
+    engine.setBeatGrid('A', { bpm: 120, firstBeatSeconds: 0 });
+    await engine.seekDeck('A', 0.2);
+    await engine.setBeatLoop('A', 1);
+    const savedLoop = engine.getSnapshot().decks.A.loop!;
+    expect(savedLoop).toEqual({ startSeconds: 0.2, endSeconds: 0.7 });
+
+    engine.setBeatGrid('A', { bpm: 60, firstBeatSeconds: 0 });
+    await engine.seekDeck('A', savedLoop.startSeconds);
+    await engine.setBeatLoop('A', 1, savedLoop);
+
+    expect(engine.getSnapshot().decks.A).toMatchObject({ loop: savedLoop, loopBeats: 1, beatGrid: { bpm: 60 } });
+    expect(mocks.commands.filter(command => command.type === 'loop').at(-1)).toMatchObject({
+      type: 'loop', loop: { startFrame: 8_820, endFrame: 30_870 }, loopBeats: 1,
+    });
+    await engine.dispose();
+  });
+
+  it('rejects invalid explicit beat-loop regions before posting a command', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    await engine.loadDeck('A', new Blob(['tone']), { name: 'tone.wav' });
+    engine.setBeatGrid('A', { bpm: 120, firstBeatSeconds: 0 });
+    const before = mocks.commands.filter(command => command.type === 'loop').length;
+
+    for (const region of [
+      { startSeconds: 0.9, endSeconds: 1.1 },
+      { startSeconds: 0.4, endSeconds: 0.39 },
+      { startSeconds: 0.2, endSeconds: 0.205 },
+      { startSeconds: Number.NaN, endSeconds: 0.6 },
+    ]) {
+      await expect(engine.setBeatLoop('A', 1, region)).rejects.toMatchObject({ code: 'invalid-value' });
+    }
+    expect(mocks.commands.filter(command => command.type === 'loop')).toHaveLength(before);
+    await engine.dispose();
+  });
+
   it('gives quantized commands at least 50 ms lead and reports the scheduled frame as requested', async () => {
     const engine = createAudioEngine();
     await engine.initializeFromGesture();

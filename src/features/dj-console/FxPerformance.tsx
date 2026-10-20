@@ -7,7 +7,7 @@ import { engine, getSnapshot } from '../../state/engine';
 import { createTemporaryFxGesture, permanentFxEnabled } from './transition-gesture';
 
 const effects: FxType[] = ['delay','reverb','flanger','tremolo','drive'];
-const effectFeels: Record<FxType,string> = {delay:'Repeats',reverb:'Space',flanger:'Sweep',tremolo:'Pulse',drive:'Grit'};
+const effectFeels: Record<FxType,string> = {delay:'Repeats',reverb:'Reverb space',flanger:'Sweep',tremolo:'Pulse',drive:'Grit'};
 const effectHints: Record<FxType,string> = {delay:'Leave a trail of repeats',reverb:'Give the track more space',flanger:'Sweep through the sound',tremolo:'Make the volume pulse',drive:'Add a little grit'};
 const shapes: Record<FxType,string> = {delay:'M2 17h4v-9h4v7h4v-5h4v3h4',reverb:'M2 16q4-16 8 0t8 0l4-4',flanger:'M2 12q5-13 10 0t10 0M2 12q5 13 10 0t10 0',tremolo:'M2 18V6h5v12h5V6h5v12h5',drive:'M2 18l6-12h8l6 12'};
 function responsePath(type:FxType,amount:number,variation:number):string {

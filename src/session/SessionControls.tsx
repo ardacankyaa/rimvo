@@ -97,12 +97,12 @@ export function SessionControls({ assignments, onRestored }: { assignments: Assi
         await loadLibraryTrack(track.id, id); mapped[id] = track.id;
         engine.setGainDb(id, settings.gainDb); engine.setFilter(id, settings.filterValue); engine.setVolume(id, settings.volume);
         for (const band of ['low', 'mid', 'high'] as const) engine.setEqDb(id, band, settings.eqDb[band]);
-        await engine.setTempo(id, settings.tempoPercent); engine.setPitchMode(id, settings.pitchMode); engine.setPitchSemitones(id, settings.pitchSemitones);
+        await engine.setTempo(id, settings.tempoPercent); engine.setPitchSemitones(id, settings.pitchSemitones); engine.setPitchMode(id, settings.pitchMode);
         if (settings.beatGrid) engine.setBeatGrid(id, settings.beatGrid, settings.beatGrid);
         engine.setQuantize(id, false);
         for (const [index, cue] of settings.hotCues.entries()) if (cue) engine.setHotCue(id, index as HotCueIndex, cue.positionSeconds);
         await engine.seekDeck(id, settings.cueSeconds); engine.setCuePoint(id);
-        if (settings.loopBeats && settings.loop) { await engine.seekDeck(id, settings.loop.startSeconds); await engine.setBeatLoop(id, settings.loopBeats); }
+        if (settings.loopBeats && settings.loop) { await engine.seekDeck(id, settings.loop.startSeconds); await engine.setBeatLoop(id, settings.loopBeats, settings.loop); }
         else await engine.setLoop(id, settings.loop);
         await engine.seekDeck(id, settings.positionSeconds); engine.setQuantize(id, settings.quantize);
         for (const type of ['delay', 'reverb', 'drive', 'flanger', 'tremolo'] as const) engine.setFx(id, { type, ...settings.fx[type] } as Parameters<typeof engine.setFx>[1]);

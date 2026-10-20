@@ -3,11 +3,21 @@ export const legalTitles: Record<LegalPage, string> = {
   privacy: 'Gizlilik', cookies: 'Çerezler ve tercihler', terms: 'Kullanım koşulları',
 };
 export interface PolicySection { readonly heading: string; readonly paragraphs: readonly string[] }
-export const policyVersion = '2026-10-18';
+export const policyVersion = '2026-10-20';
+export const hostingReferences = {
+  tr: [
+    { label: 'GitHub Pages: veri toplama', href: 'https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages' },
+    { label: 'GitHub Gizlilik Açıklaması', href: 'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement' },
+  ],
+  en: [
+    { label: 'GitHub Pages: Data collection', href: 'https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages' },
+    { label: 'GitHub Privacy Statement', href: 'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement' },
+  ],
+} as const;
 export const policies: Record<LegalPage, readonly PolicySection[]> = {
   privacy: [
     { heading: 'Müzik cihazında kalır', paragraphs: [
-      'RIMVO, açık kaynaklı bir tarayıcı DJ uygulamasıdır. Bu metin yerel sürümün davranışını açıklar. Hesap, reklam, analiz hizmeti veya medya yükleme sunucusu içermez.',
+      'RIMVO, açık kaynaklı bir tarayıcı DJ uygulamasıdır. Resmî web kopyası GitHub Pages üzerinde https://ardacankyaa.github.io/rimvo/ adresinde yayımlanır. DJ uygulamasında hesap, reklam, analiz hizmeti veya kişisel medya yükleme sunucusu yoktur.',
       'Seçtiğin ses dosyaları, dosya adı, boyutu, parça bilgisi ve kapak görseli tarayıcıda okunur. Dalga biçimi, BPM ve ton analizi cihazında yapılır; uygulama bu içeriği bir sunucuya göndermez. Mikrofon, kişiler veya konum izni istemez.',
     ] },
     { heading: 'Kayıt ve saklama', paragraphs: [
@@ -17,12 +27,12 @@ export const policies: Record<LegalPage, readonly PolicySection[]> = {
       'Tema tercihi yalnız Çerezler ve tercihler bölümündeki seçeneği açarsan cihazda hatırlanır. Kapatmak saklanan tercihi siler. Tarayıcının önbelleği, normal site dosyalarının yerel kopyalarını ayrıca tutabilir.',
     ] },
     { heading: 'İnternet ve barındırma', paragraphs: [
-      'Uygulama dosyaları ve örnek parçalar uygulamanın kendi adresinden alınır. Örnek parçaları açmak, kişisel ses dosyalarını yüklemek anlamına gelmez.',
-      'Yerel kullanımda bu sürümde merkezi bir ziyaretçi kaydı yoktur. RIMVO bir internet adresinde yayımlanırsa barındırma veya ağ sağlayıcısı IP adresi, erişim zamanı ve tarayıcı bilgisi gibi erişim kayıtları işleyebilir. Bu dağıtım için sağlayıcı, amaç, hukuki dayanak, saklama süresi, varsa aktarım ve iletişim bilgileri siteyi yayımlayan tarafından ayrıca açıklanmalıdır. Bu yerel sürüm bu bilgileri varsaymaz.',
+      'Resmî web kopyasında uygulama dosyaları ve örnek parçalar GitHub Pages üzerinden alınır. GitHub, GitHub Pages sitelerini ziyaret edenlerin IP adreslerinin, GitHub hesabıyla oturum açmış olsun ya da olmasın, güvenlik amacıyla kaydedilip saklandığını belirtir. GitHub Gizlilik Açıklaması ayrıca IP adresi ve istek tarih/saatini hizmet kullanım verileri arasında sayar. Ayrıntılar için bu bölümün sonundaki GitHub kaynaklarına bak.',
+      'Bu barındırma kayıtları, RIMVO uygulamasının kişisel ses dosyalarını, dosya bilgilerini, kapak görsellerini, oturumlarını veya kayıtlarını sunucuya gönderdiği anlamına gelmez; bunlar tarayıcıda işlenir. Bilgisayarında yerel olarak çalıştırdığın kopya için GitHub Pages ziyaret kaydı oluşmaz. Başka bir sağlayıcıda yayımlanan kopyanın barındırma uygulamaları o sağlayıcının koşullarına bağlıdır.',
     ] },
     { heading: 'Kontrol sende', paragraphs: [
       'Oturum menüsünden kaydedilmiş oturumu silebilir, parçaları kütüphaneden çıkarabilir, indirdiğin kayıtları cihazından silebilir ve tema saklamasını kapatabilirsin. Kaydedilmiş oturum, kütüphaneden parça çıkardığında değişmez; yeniden kaydet veya kayıtlı oturumu sil. Tarayıcının site verilerini temizlemek kayıtlı oturumu ve tercihleri kaldırır.',
-      'Bir yayımlanmış site kişisel veri işliyorsa uygulanabilir mevzuat uyarınca bilgi edinme, erişim, düzeltme, silme ve ilgili diğer haklar için o sitenin veri sorumlusuna başvurulabilir. Yerel açık kaynak sürüm adına doğrulanmamış bir işletmeci veya iletişim adresi belirtilmemiştir.',
+      'Resmî web kopyasının barındırma kayıtları ve GitHub’a yapılabilecek başvurular hakkında bilgi için GitHub Gizlilik Açıklamasına bak. GitHub Pages dışında yayımlanan kopyalarda, ilgili barındırma sağlayıcısının ve yayımlayanın gizlilik açıklamaları geçerlidir.',
     ] },
   ],
   cookies: [
@@ -54,7 +64,7 @@ export const policies: Record<LegalPage, readonly PolicySection[]> = {
     ] },
     { heading: 'Açık kaynak ve yasal haklar', paragraphs: [
       'Yazılım açık kaynaklıdır; kaynak kodu kullanımı dağıtımla gelen MIT lisansına tabidir. Bu koşullar zorunlu tüketici haklarını, uygulanabilir kişisel veri koruma haklarını veya kanunun sınırlandırılmasına izin vermediği sorumlulukları kaldırmaz.',
-      'İnternette yayımlanan veya ticari olarak sunulan bir sürümün işletmecisi ve ek koşulları o dağıtımda belirtilmelidir. Bu yerel sürüm için belirli bir şirket, mahkeme, ülke yetkisi veya iletişim adresi varsayılmaz. Davranış değiştiğinde bu metinlerin tarihi ve içeriği de güncellenmelidir.',
+      'Resmî web kopyası GitHub Pages üzerinde yayımlanır. Bu kullanım koşulları barındırma sağlayıcısının kendi koşullarının yerine geçmez. GitHub Pages dışında yayımlanan kopyaların ek koşulları ilgili yayımlayana ve sağlayıcıya bağlıdır. RIMVO’nun davranışı değiştiğinde bu metinlerin tarihi ve içeriği güncellenir.',
     ] },
   ],
 };
@@ -62,7 +72,7 @@ export const policies: Record<LegalPage, readonly PolicySection[]> = {
 export const englishPolicies: Record<LegalPage, readonly PolicySection[]> = {
   privacy: [
     { heading: 'Your music stays on your device', paragraphs: [
-      'RIMVO reads selected audio files, metadata and artwork in your browser. Waveform, tempo and key analysis happen on your device. Personal music and recordings are not uploaded. RIMVO has no account, advertising or analytics service and does not request microphone, contacts or location access.',
+      'RIMVO reads selected audio files, metadata and artwork in your browser. Waveform, tempo and key analysis happen on your device. Personal music and recordings are not uploaded. The official website is hosted on GitHub Pages at https://ardacankyaa.github.io/rimvo/. The DJ app has no account, advertising, analytics or personal-media upload service and does not request microphone, contacts or location access.',
     ] },
     { heading: 'Recordings and saved sessions', paragraphs: [
       'Recording starts only when you choose it and captures the master mix. Downloads and sharing create new copies; original tracks stay unchanged. When you approve sharing, the chosen service handles that copy under its own terms.',
@@ -70,8 +80,8 @@ export const englishPolicies: Record<LegalPage, readonly PolicySection[]> = {
       'Your chosen language is remembered locally under rimvo-language. Theme storage is optional. Separate headphone monitoring may request speaker-selection permission in a supporting browser, never microphone access. The monitor signal is not added to the master recording.',
     ] },
     { heading: 'Hosting and control', paragraphs: [
-      'Application files and bundled demos come from this site. The hosting and network providers may process access information such as IP addresses and request times under their own policies.',
-      'Delete saved sessions from the Session menu. Removing a library track does not change an existing save; save again or delete the saved session. Clear this site’s browser data to remove saved sessions and preferences. Downloaded files remain until you delete them from your device. A published deployment is responsible for describing any additional data processing and contact details.',
+      'Application files and bundled demos on the official website come from GitHub Pages. GitHub says it logs and stores visitors’ IP addresses for security purposes, whether or not they are signed in. Its Privacy Statement also lists IP addresses and request times as Service Usage Information. See the GitHub sources linked at the end of this section. These hosting records are separate from the app: selected audio, metadata, artwork, saved sessions and recordings are processed in the browser and are not sent to RIMVO’s server. A copy hosted elsewhere may follow that provider’s practices.',
+      'Delete saved sessions from the Session menu. Removing a library track does not change an existing save; save again or delete the saved session. Clear this site’s browser data to remove saved sessions and preferences. Downloaded files remain until you delete them from your device. For information about hosting records on the official site and requests to GitHub, see GitHub’s Privacy Statement. Copies hosted elsewhere should describe their own provider and any additional data processing.',
     ] },
   ],
   cookies: [
@@ -84,7 +94,7 @@ export const englishPolicies: Record<LegalPage, readonly PolicySection[]> = {
     { heading: 'Create with RIMVO', paragraphs: ['RIMVO lets you play and mix two tracks locally, apply effects and record a new output file. Original tracks stay unchanged. Use content you have permission to use and obtain the necessary rights before distributing or publicly playing your mix. RIMVO does not acquire music rights for you.'] },
     { heading: 'Licenses', paragraphs: ['Bundled original demos are CC0-1.0. That license does not apply to your own music. The software uses the MIT license; dependencies retain their own licenses, as listed in the distribution notices.'] },
     { heading: 'Protect your work', paragraphs: ['Download important recordings. Saved browser sessions are a convenience and may be cleared by the browser. Device limits, memory, screen locks or audio interruptions can stop playback or recording. Tempo and key estimates may need manual correction. Keep listening levels comfortable.'] },
-    { heading: 'Open source', paragraphs: ['Source code use follows the included MIT license. These terms do not remove mandatory consumer or privacy rights or liabilities that cannot be limited by applicable law. A separately operated or commercial deployment must identify its operator and any additional terms.'] },
+    { heading: 'Open source', paragraphs: ['Source code use follows the included MIT license. These terms do not remove mandatory consumer or privacy rights or liabilities that cannot be limited by applicable law. The official website is hosted on GitHub Pages; these terms do not replace the hosting provider’s own terms. Copies hosted elsewhere may have additional terms supplied by their publisher or provider. RIMVO’s policy text and date should be updated if its behavior changes.'] },
   ],
 };
 

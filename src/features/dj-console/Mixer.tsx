@@ -56,9 +56,9 @@ function MixerAdjustment({ label, value, min, max, step, defaultValue, valueText
 }
 
 function filterText(value: number): string {
-  return value < -0.04 ? 'Low-pass ' + Math.round(Math.abs(value) * 100) + '%'
-    : value > 0.04 ? 'High-pass ' + Math.round(value * 100) + '%'
-      : 'Bypass';
+  return value < -0.04 ? t('Low-pass') + ' ' + Math.round(Math.abs(value) * 100) + '%'
+    : value > 0.04 ? t('High-pass') + ' ' + Math.round(value * 100) + '%'
+      : t('Bypass');
 }
 
 export function Mixer({ snapshot, run, onOpenTools, onLearn, onTransitionComplete }: MixerProps) {
@@ -173,7 +173,7 @@ export function MixerTools({ snapshot, run }: MixerToolsProps) {
   return <section className="mixer-tools" aria-label={t("Mixer settings")}>
     <div className="mixer-tools__navigation"><select aria-label={t("Mixer view")} value={view} onChange={event=>setView(event.currentTarget.value)}><option value={"Adjust"}>{t("Adjust")}</option><option value={"Curve"}>{t("Curve")}</option></select>
       <select hidden={view!=='Adjust'} aria-label={t("Adjustment channel")} value={channel} onChange={event=>setChannel(event.currentTarget.value as DeckId)}><option value={"A"}>{t("A")}</option><option value={"B"}>{t("B")}</option></select>
-      <select hidden={view!=='Adjust'} aria-label={t("Adjustment parameter")} value={parameter} onChange={event=>setParameter(event.currentTarget.value)}>{['Gain','High','Mid','Low','Filter'].map(name=><option key={name} value={name}>{name}</option>)}</select>
+      <select hidden={view!=='Adjust'} aria-label={t("Adjustment parameter")} value={parameter} onChange={event=>setParameter(event.currentTarget.value)}>{['Gain','High','Mid','Low','Filter'].map(name=><option key={name} value={name}>{t(name)}</option>)}</select>
     </div>
     <div className="mixer-tools__channels" hidden={view!=='Adjust'}>
       {(['A', 'B'] as const).map(id => {

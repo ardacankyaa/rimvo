@@ -21,6 +21,18 @@ export function t<T>(value: T): T {
   if (language === 'en') return (Object.hasOwn(english, text) ? value.replace(text, english[text]) : value) as T;
   const direct = Object.hasOwn(turkish, text) ? turkish[text] : undefined;
   if (direct) return value.replace(text, direct) as T;
+  const tapProgress = text.match(/^Tap with the beat · (\d+) of 4$/);
+  if (tapProgress) return `Ritme göre vur · ${tapProgress[1]} / 4` as T;
+  const estimateRange = text.match(/^Estimate range · (\d+(?:\.\d+)?)–(\d+(?:\.\d+)?) BPM$/);
+  if (estimateRange) return `Tahmin aralığı · ${estimateRange[1]}–${estimateRange[2]} BPM` as T;
+  const gridConfidence = text.match(/^(\d+)% grid confidence$/);
+  if (gridConfidence) return `Izgara güveni %${gridConfidence[1]}` as T;
+  const tapCount = text.match(/^Tap (\d+)\/4$/);
+  if (tapCount) return `Vur ${tapCount[1]}/4` as T;
+  const effectFeel = text.match(/^Hold & move · (Repeats|Reverb space|Sweep|Pulse|Grit)$/);
+  if (effectFeel) return `Basılı tut ve hareket ettir · ${turkish[effectFeel[1]] ?? effectFeel[1]}` as T;
+  const liveEffect = text.match(/^(Echo|Room|Flanger|Tremolo|Drive) · Live$/);
+  if (liveEffect) return `${turkish[liveEffect[1]] ?? liveEffect[1]} · Canlı` as T;
   // Only translate the application's wrapper and known diagnostics. The title
   // and unknown browser diagnostics may contain user data and stay verbatim.
   const loadFailure = text.match(/^Could not load (.+) into Deck ([AB])\.(?: (.+))?$/s);

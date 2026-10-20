@@ -936,26 +936,35 @@ export class BrowserAudioEngine implements AudioEngine {
     return this.seekClearingLoop(id, target, timing.applyFrame);
   }
 
-  async setBeatLoop(id: DeckId, beats: BeatDivision): Promise<CommandAck> {
+  async setBeatLoop(id: DeckId, beats: BeatDivision, savedRegion?: LoopRegion): Promise<CommandAck> {
     const deck = this.requireTrack(id);
     const revision = deck.revision;
     const grid = this.requireTempoGrid(deck);
     if (![0.25, 0.5, 1, 2, 4, 8, 16, 32].includes(beats)) throw this.error('invalid-value', 'Beat loop size is not supported.', 'transport');
     const periodFrames = 60 * deck.track!.sampleRate / grid.bpm;
-    const timing = deck.quantize&&this.hasReliableGrid(deck) ? this.nextQuantizedBoundary(deck) : { applyFrame: undefined, mediaFrame: this.readPosition(id).frame };
+    if (savedRegion !== undefined && (!savedRegion || typeof savedRegion !== 'object')) throw this.error('invalid-value', 'The saved loop region is invalid.', 'transport');
+    const timing = savedRegion !== undefined ? null : deck.quantize&&this.hasReliableGrid(deck) ? this.nextQuantizedBoundary(deck) : { applyFrame: undefined, mediaFrame: this.readPosition(id).frame };
     const lengthFrames = periodFrames * beats;
-    const startFrame = timing.mediaFrame;
-    const endFrame = startFrame + lengthFrames;
-    if (!Number.isFinite(startFrame) || startFrame < 0 || endFrame > deck.track!.frameCount) {
+    const exactRegion = savedRegion === undefined ? null : {
+      startSeconds: this.strictFinite(savedRegion.startSeconds, 0, deck.track!.durationSeconds, 'Loop start'),
+      endSeconds: this.strictFinite(savedRegion.endSeconds, 0, deck.track!.durationSeconds, 'Loop end'),
+    };
+    if (exactRegion && exactRegion.endSeconds <= exactRegion.startSeconds) throw this.error('invalid-value', 'Loop end must be greater than loop start.', 'transport');
+    const startFrame = exactRegion ? Math.round(exactRegion.startSeconds * deck.track!.sampleRate) : timing!.mediaFrame;
+    const endFrame = exactRegion ? Math.round(exactRegion.endSeconds * deck.track!.sampleRate) : startFrame + lengthFrames;
+    if (!Number.isFinite(startFrame) || !Number.isFinite(endFrame) || startFrame < 0 || endFrame > deck.track!.frameCount) {
       throw this.error('invalid-value', 'The requested beat loop does not fit at the selected position.', 'transport');
+    }
+    if (exactRegion && endFrame - startFrame < Math.max(2, Math.max(1, Math.round(deck.track!.sampleRate * 0.005)) * 2)) {
+      throw this.error('invalid-value', 'A loop must be at least 10 ms after frame rounding.', 'transport');
     }
     this.cancelCuePreview(id);
     this.cancelScratchGesture(id);
     this.breakSyncForSeek(id);
-    const ack = await this.sendCommand(id, 'loop', { loop: { startFrame, endFrame }, loopBeats: beats, applyFrame: timing.applyFrame });
+    const ack = await this.sendCommand(id, 'loop', { loop: { startFrame, endFrame }, loopBeats: beats, applyFrame: timing?.applyFrame });
     this.assertNotDisposed();
     if (deck.revision !== revision) throw this.error('stale-load', 'The track changed before the beat loop command completed.', 'transport');
-    deck.loop = Object.freeze({ startSeconds: startFrame / deck.track!.sampleRate, endSeconds: endFrame / deck.track!.sampleRate });
+    deck.loop = Object.freeze(exactRegion ?? { startSeconds: startFrame / deck.track!.sampleRate, endSeconds: endFrame / deck.track!.sampleRate });
     deck.loopBeats = beats;
     this.publish();
     return ack;

@@ -314,7 +314,8 @@ export interface AudioEngine {
   startCuePreview(id: DeckId): Promise<CommandAck>;
   endCuePreview(id: DeckId): Promise<CommandAck>;
   beatJump(id: DeckId, beats: number): Promise<CommandAck>;
-  setBeatLoop(id: DeckId, beats: BeatDivision): Promise<CommandAck>;
+  /** Restore a beat loop's saved bounds without recomputing them from the current grid. */
+  setBeatLoop(id: DeckId, beats: BeatDivision, region?: LoopRegion): Promise<CommandAck>;
   setFx(id: DeckId, setting:
     | { readonly type: 'delay'; readonly enabled: boolean; readonly wet: number; readonly feedback: number; readonly division: 0.25 | 0.5 | 1 }
     | { readonly type: 'reverb'; readonly enabled: boolean; readonly wet: number }

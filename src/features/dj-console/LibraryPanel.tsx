@@ -1,7 +1,8 @@
-import { t } from '../../i18n';
+import { t, useLanguage } from '../../i18n';
 import { useMemo, useState, useSyncExternalStore, type ChangeEvent, type DragEvent } from 'react';
 import type { DeckId } from '../../audio/types';
 import type { LibraryTrack } from '../../library/library';
+import { matchesSearchText } from '../../library/search';
 import { formatMediaTime } from '../../ui/time';
 import { ToggleButton } from '../../ui/ControlPrimitives';
 import { Icon } from '../../ui/Icon';
@@ -23,9 +24,8 @@ function metaDuration(track: LibraryTrack): string {
   return track.durationSeconds && Number.isFinite(track.durationSeconds) ? formatMediaTime(track.durationSeconds) : 'Duration pending';
 }
 
-function matchingTrack(track: LibraryTrack, query: string): boolean {
-  const value = query.trim().toLocaleLowerCase();
-  return !value || (track.title + ' ' + track.artist + ' ' + track.file?.name).toLocaleLowerCase().includes(value);
+function matchingTrack(track: LibraryTrack, query: string, language: 'en' | 'tr'): boolean {
+  return matchesSearchText([track.title, track.artist, track.file?.name ?? ''].join(' '), query, language);
 }
 
 function subscribeSize(notify:()=>void){window.addEventListener('resize',notify);return ()=>window.removeEventListener('resize',notify);}
@@ -33,7 +33,8 @@ function pageSize(){return window.innerWidth<900||window.innerHeight<640?6:windo
 
 export function LibraryPanel({ tracks, query, loadingByDeck, loadedByDeck, occupiedByDeck, onAdd, onLoad, onRemove, onError }: LibraryPanelProps) {
   const [scrollable, setScrollable] = useState(true);
-  const filtered = useMemo(() => tracks.filter(track => matchingTrack(track, query)), [tracks, query]);
+  const language = useLanguage();
+  const filtered = useMemo(() => tracks.filter(track => matchingTrack(track, query, language)), [tracks, query, language]);
   const size=useSyncExternalStore(subscribeSize,pageSize,()=>1);
   const [selection,setSelection]=useState({query,page:0});
   const pages=Math.max(1,Math.ceil(filtered.length/size));

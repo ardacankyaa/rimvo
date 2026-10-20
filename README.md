@@ -59,8 +59,9 @@ Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, m
 - Recording stops at the earlier of 15 minutes or 128 MiB of captured PCM data. At 48 kHz this is about 11 minutes 39 seconds.
 - **Session → Save session on this device** stores your library files, deck positions, cues, beat grids, loops, effects, mixer settings and stopped take locally (up to 256 MiB). Restore explicitly after reopening; playback stays paused. Browser storage can be cleared, so download important recordings separately. There is one saved session per site/device; saving again replaces it.
 - **Headphones** routes selected decks before the crossfader to a separate audio output in browsers supporting speaker selection. Connect an additional output/audio interface and choose a different device from the main speakers. This monitor signal is excluded from recordings. Unsupported browsers show an explanation and keep the main mixer available.
-- Choose **EN / TR** for English or Turkish. Your selected language is remembered on this device.
+- Choose **EN / TR** for English or Turkish. Your selected language is remembered on this device; library search uses that language's case rules, including Turkish dotted and dotless I.
 - Session tools refresh saved-session availability across tabs and read the latest device save before restoring. Unreadable saves show a recovery message and can be deleted explicitly. Opening Session or Headphones closes the other panel; Escape closes it and returns focus to its button.
+- Session restore preserves the selected speed/tone mode, stored semitone value and exact loop bounds, including beat loops whose BPM grid was edited after creation.
 - Recording shows remaining time and warns during the final minute. Discarding an unsaved take requires confirmation; MP3 conversion shows progress and can be cancelled back to WAV.
 - BPM and key are estimates; use manual adjustments when needed. Browser and device support, memory, and audio hardware affect performance.
 

@@ -71,7 +71,7 @@ The source-tree package manifests at that provenance revision still say 2.1.0; t
 
 ## Integrity and offline distribution
 
-`source/manifest.json` lists the source-archive and license-text SHA-256 hashes, original package coordinates and provenance URLs. These are downloadable beside the JavaScript on the same site; no XERJ account or other service is required.
+`source/manifest.json` lists the source-archive and license-text SHA-256 hashes, original package coordinates and provenance URLs. These are downloadable beside the JavaScript on the same site; no account or other service is required.
 
 For an offline or mirrored distribution, retain this page, `THIRD_PARTY_LICENSES.txt`, `THIRD-PARTY-NOTICES.txt`, the complete `licenses/` directory, and the `source/` archives and manifest alongside the generated application. They are copied by Vite from `public/` to `dist/`. The original upstream licenses and notices remain attached to their implementations.
 

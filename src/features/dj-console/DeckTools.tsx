@@ -144,7 +144,7 @@ function DeckToolsContent({ id, deck, run, onUnloadDeck, onOpenBpm, tab, view, z
 
     <section id={'deck-tools-' + id + '-panel-track'} className="deck-tools__panel deck-tools__panel--track" role="tabpanel" aria-labelledby={'deck-tools-' + id + '-tab-track'} tabIndex={0} hidden={tab !== 'track'}>
       <div className="track-tools">
-        <div><h3>{t("Track")}</h3><p>{deck.track?.name ?? 'No track loaded'}</p>
+        <div><h3>{t("Track")}</h3><p>{deck.track?.name ?? t('No track loaded')}</p>
           {deck.track && <p>{t(deck.track.format.toUpperCase())} · {t(formatMediaTime(deck.durationSeconds))}</p>}
         </div>
         <div className="track-tools__tempo" role="group" aria-label={t('Tempo adjustment ' + id)}>

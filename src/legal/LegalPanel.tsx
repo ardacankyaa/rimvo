@@ -1,6 +1,6 @@
 import { t, useLanguage } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
-import { englishPolicies, legalTitles, policies, policyVersion, type LegalPage } from './policies';
+import { englishPolicies, hostingReferences, legalTitles, policies, policyVersion, type LegalPage } from './policies';
 import { getRememberPreferences, setRememberPreferences } from './preference-storage';
 import './legal.css';
 import { BrandMark } from '../ui/BrandMark';
@@ -10,6 +10,8 @@ export function LegalPanel({ page, onClose }: LegalPanelProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [remember, setRemember] = useState(getRememberPreferences);
   const [storageError, setStorageError] = useState(false);
+  const pageSections = (language === 'tr' ? policies : englishPolicies)[page];
+  const hostingHeading = language === 'tr' ? 'İnternet ve barındırma' : 'Hosting and control';
   useEffect(() => {
     const node = dialog.current;
     if (!node) return;
@@ -27,10 +29,13 @@ export function LegalPanel({ page, onClose }: LegalPanelProps) {
       <button type="button" aria-label={t("Kapat")} onClick={onClose} autoFocus>×</button>
     </header>
     <div className="legal-dialog__body" tabIndex={0} aria-label={t(legalTitles[page]) + (language === 'tr' ? ' metni' : ' text')}>
-      <p className="legal-dialog__date">{t("Yerel açık kaynak sürüm ·")}{t(policyVersion)}</p>
-      {(language === 'tr' ? policies : englishPolicies)[page].map(section => <section key={section.heading}>
+      <p className="legal-dialog__date">RIMVO · {policyVersion}</p>
+      {pageSections.map(section => <section key={section.heading}>
         <h3>{t(section.heading)}</h3>
         {section.paragraphs.map(paragraph => <p key={paragraph}>{t(paragraph)}</p>)}
+        {page === 'privacy' && section.heading === hostingHeading && <p className="legal-dialog__licenses">
+          {hostingReferences[language].map(reference => <a key={reference.href} href={reference.href} target="_blank" rel="noopener noreferrer">{reference.label}</a>)}
+        </p>}
       </section>)}
       {page === 'cookies' && <fieldset className="legal-dialog__preference">
         <legend>{t("Tema tercihi")}</legend>
