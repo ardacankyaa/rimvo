@@ -6,13 +6,10 @@
 *.wav binary
 *.mp3 binary
 *.flac binary
-.agents/skills/** -text
-docs/history/evidence/** -text
 *.gz binary
 public/licenses/*.txt text eol=lf
 public/source/manifest.json text eol=lf
 
-# Portable container scripts and workflow configuration
-.devcontainer/*.sh text eol=lf
+# Workflow configuration
 .github/**/*.yml text eol=lf
 .github/**/*.yaml text eol=lf

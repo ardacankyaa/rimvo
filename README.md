@@ -88,7 +88,8 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 ## Project Structure
 
 ```
-├── public/              # Static assets, branding, and bundled demo tracks
+├── public/              # Static assets, branding, demo tracks, licenses and dependency sources
+├── scripts/             # License and source-distribution verification
 ├── src/
 │   ├── analysis/        # Web Worker BPM, rhythm, and spectral analysis
 │   ├── audio/           # Central audio engine, graph, and AudioWorklet processors
@@ -104,7 +105,7 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 │   ├── App.tsx          # Main console container
 │   ├── main.tsx         # React root entry point
 │   └── styles.css       # Design system and themes
-├── tests/               # Unit and DSP test suites
+├── tests/               # Unit, DSP and Playwright browser test suites
 ├── index.html           # HTML entry point
 ├── package.json         # Project manifest and scripts
 ├── tsconfig.json        # TypeScript configuration

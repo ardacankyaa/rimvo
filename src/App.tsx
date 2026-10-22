@@ -515,12 +515,12 @@ export default function App() {
         <span className="tools-dock__hint">{t(dockContext === 'library' ? 'Load a track into A or B. Files stay on this device.' : 'Your main mixing controls stay above.')}</span>
       </div>
       <div className="tools-dock__body">{dockContext!=='library'&&<button type="button" className="mobile-dock-close" aria-label={t("Close tools")} onClick={()=>openDock('library')}>×</button>}<i key={dockSignal} className="tool-reveal-signal" aria-hidden="true" />
-        {t(!searchOpen&&errorNotice)}
+        {!searchOpen&&errorNotice}
         <div ref={libraryPopup} className={'tools-panel'+(searchOpen?' track-search-popover':'')} id="dock-panel-library" role={searchOpen?'dialog':'tabpanel'} aria-label={t(searchOpen?'Track search results':undefined)} aria-labelledby={searchOpen?undefined:'dock-tab-library'} hidden={!searchOpen && dockContext !== 'library'}>
           {searchOpen && <button type="button" className="track-search__close" aria-label={t("Close track search")} onClick={()=>closeSearch(true)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>}
           <LibraryPanel tracks={tracks} query={query} loadingByDeck={loadingByDeck} loadedByDeck={{A:entryA?.id??null,B:entryB?.id??null}} occupiedByDeck={{A:Boolean(snapshot.decks.A.track),B:Boolean(snapshot.decks.B.track)}} onAdd={addFiles} onLoad={loadFromLibrary} onRemove={removeTrack}
             onError={cause => reportError(cause, 'library')} />
-          {t(searchOpen&&errorNotice)}
+          {searchOpen&&errorNotice}
         </div>
         {(['A', 'B'] as const).map(id => <div className="tools-panel" key={id} id={'dock-panel-' + id} role="tabpanel" aria-labelledby={'dock-tab-' + id} hidden={dockContext !== id}>
           <DeckTools key={snapshot.decks[id].revision} id={id} deck={snapshot.decks[id]} onOpenBpm={openTrackBpm} run={run} onError={cause => reportError(cause, id)} onNotify={setMessage}

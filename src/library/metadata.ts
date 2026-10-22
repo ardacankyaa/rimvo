@@ -10,7 +10,9 @@ const LIMIT = 1024 * 1024, ART_LIMIT = 512 * 1024;
 const clean = (value: string, fallback: string, max = 160) => value.replace(/\p{Cc}/gu, '').trim().slice(0, max) || fallback;
 function text(bytes: Uint8Array, encoding = 3): string {
     try {
-        const format = encoding === 0 ? 'windows-1252' : encoding === 1 ? 'utf-16le' : encoding === 2 ? 'utf-16be' : 'utf-8';
+        // ID3 encoding 1 is UTF-16 with a byte-order mark, which may be big-endian.
+        const bigEndianBom = encoding === 1 && bytes[0] === 0xfe && bytes[1] === 0xff;
+        const format = encoding === 0 ? 'windows-1252' : encoding === 1 ? (bigEndianBom ? 'utf-16be' : 'utf-16le') : encoding === 2 ? 'utf-16be' : 'utf-8';
         return new TextDecoder(format).decode(bytes).replace(/^\uFEFF/, '');
     }
     catch {

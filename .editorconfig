@@ -12,9 +12,3 @@ end_of_line = crlf
 
 [*.{ts,tsx,js,mjs,json,css,html,md,yml,yaml}]
 end_of_line = lf
-
-[.agents/skills/**]
-charset = unset
-end_of_line = unset
-insert_final_newline = false
-trim_trailing_whitespace = false
