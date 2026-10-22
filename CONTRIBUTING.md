@@ -42,8 +42,9 @@ Guidelines:
 
 The distribution pins the exact source revision it was built from (`public/SOURCE_CODE.md` and `public/source/manifest.json`). When `src/`, `index.html`, `vite.config.ts` or `package-lock.json` change:
 
-1. Commit and push the change.
-2. Update the commit and `runtimeSha256` in `public/source/manifest.json` and the commit link in `public/SOURCE_CODE.md` to that pushed commit.
-3. Run `npm run check:licenses` (it reports a digest mismatch until step 2 is correct), commit and push.
+1. Commit the change, but do not push yet.
+2. Update the commit and `runtimeSha256` in `public/source/manifest.json` and the commit link in `public/SOURCE_CODE.md` to that commit.
+3. Run `npm run check:licenses` (it reports a digest mismatch until step 2 is correct) and commit.
+4. Push both commits together. CI checks the pushed tip, so pushing the first commit alone fails its license check.
 
 By contributing, you agree that your contribution is licensed under the project's [MIT license](LICENSE).
