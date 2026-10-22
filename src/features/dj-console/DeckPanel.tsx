@@ -1,7 +1,7 @@
 import { t } from '../../i18n';
 import { BpmControl } from './BpmControl';
 import {syncForMix} from './sync-action';
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ChangeEvent, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { DeckId, DeckSnapshot } from '../../audio/types';
 import type { LibraryTrack } from '../../library/library';
 import { engine, getSnapshot } from '../../state/engine';
@@ -12,6 +12,7 @@ import { JogWheel } from './JogWheel';
 import { Icon } from '../../ui/Icon';
 import { NudgeButton } from './NudgeButton';
 import { formatMediaTime } from '../../ui/time';
+import { registerVisualTask } from '../../ui/visual-loop';
 
 export type DeckToolTab = 'loop' | 'cues' | 'grid' | 'fx' | 'waveform' | 'track';
 export { DeckTools } from './DeckTools';
@@ -49,6 +50,27 @@ function syncReasonText(deck: DeckSnapshot): string {
     case 'manual-rate': return 'Sync disengaged after tempo adjustment';
     default: return deck.sync.status === 'active' ? deck.sync.mode==='tempo'?'Tempo matched · adjust alignment by ear':'Following the other deck' : deck.beatGrid ? 'Match the two track tempos' : 'Find or enter BPM to sync';
   }
+}
+
+const clockText = (seconds: number) => formatMediaTime(seconds).replace(/\.\d+$/, '');
+
+/** Elapsed time follows the engine every frame; React snapshots skip position-only updates. */
+function DeckProgress({ id, loaded, durationSeconds }: { id: DeckId; loaded: boolean; durationSeconds: number }) {
+  const elapsed = useRef<HTMLSpanElement>(null);
+  const bar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    let lastText = '', lastRatio = -1;
+    const draw = () => {
+      const position = loaded ? engine.readPosition(id).positionSeconds : 0;
+      const text = clockText(position);
+      const ratio = durationSeconds > 0 ? Math.min(1, Math.max(0, position / durationSeconds)) : 0;
+      if (elapsed.current && text !== lastText) { elapsed.current.textContent = t(text); lastText = text; }
+      if (bar.current && Math.abs(ratio - lastRatio) > 0.0005) { bar.current.style.setProperty('--track-progress', ratio * 100 + '%'); lastRatio = ratio; }
+    };
+    draw();
+    return loaded ? registerVisualTask(draw) : undefined;
+  }, [id, loaded, durationSeconds]);
+  return <div className="deck-track__progress"><span ref={elapsed}>{t(clockText(0))}</span><i ref={bar} /><span>{t(clockText(durationSeconds))}</span></div>;
 }
 
 function CueButton({ id, playing, loaded, revision, run, onAuditionChange }: { id: DeckId; playing: boolean; loaded: boolean; revision: number; run: (action: () => void | Promise<unknown>) => void; onAuditionChange: (held: boolean) => void }) {
@@ -173,7 +195,7 @@ export function DeckPanel({ id, deck, trackEntry, run, onError, onNotify, onLoad
           <span className="deck-track__fallback" hidden={!!coverUrl && failedArtworkId !== trackEntry?.id}>{loaded ? initials(coverTitle) : <Icon name="folder" />}</span>
           <span className="deck-track__art-id">{t(id)}</span>
         </div>
-        <div className="deck-track__info"><div className="deck-track__title"><span className="deck-name__mark" aria-hidden="true">{t(id)}</span><h3 title={coverTitle}>{coverTitle}</h3></div><p className={showArtist?undefined:'visually-hidden'} title={coverArtist}>{coverArtist}</p><span className="deck-track__meta">{t(loaded ? (deck.effectiveBpm?.toFixed(0) ?? '—') + ' BPM · ' + deck.track?.format.toUpperCase() : 'MP3 · WAV · FLAC')}</span><div className="deck-track__progress"><span>{t(formatMediaTime(deck.positionSeconds).replace(/\.\d+$/, ''))}</span><i style={{'--track-progress': (deck.durationSeconds ? deck.positionSeconds / deck.durationSeconds * 100 : 0) + '%'} as CSSProperties} /><span>{t(formatMediaTime(deck.durationSeconds).replace(/\.\d+$/, ''))}</span></div></div>
+        <div className="deck-track__info"><div className="deck-track__title"><span className="deck-name__mark" aria-hidden="true">{t(id)}</span><h3 title={coverTitle}>{coverTitle}</h3></div><p className={showArtist?undefined:'visually-hidden'} title={coverArtist}>{coverArtist}</p><span className="deck-track__meta">{t(loaded ? (deck.effectiveBpm?.toFixed(0) ?? '—') + ' BPM · ' + deck.track?.format.toUpperCase() : 'MP3 · WAV · FLAC')}</span><DeckProgress id={id} loaded={loaded} durationSeconds={deck.durationSeconds} /></div>
         <label className={'file-button deck-header__replace' + (!loaded ? ' deck-header__replace--empty' : '')}><Icon name="folder" /><span>{t(loaded ? 'Replace' : 'Add track')}</span><input key={id + '-' + deck.revision} aria-label={t((loaded ? 'Replace ' : 'Load track ') + id)} type="file" accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac" onChange={receiveFile} /></label>
       </div>
     </header>

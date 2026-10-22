@@ -205,7 +205,9 @@ export default function App() {
   useEffect(() => {
     const keys = (event: KeyboardEvent) => {
       if (helpOpen || document.querySelector('dialog[open]')) return;
-      if (isTypingTarget(event.target) || event.altKey || event.ctrlKey || event.metaKey) return;
+      // AltGr types [ and ] on Turkish and many other layouts; Windows reports it as Ctrl+Alt.
+      const altGraph = event.getModifierState('AltGraph');
+      if (isTypingTarget(event.target) || event.metaKey || (!altGraph && (event.altKey || event.ctrlKey))) return;
       if (event.key === '?' && !event.repeat) { event.preventDefault(); setHelpOpen(true); return; }
       const focusedDeck = activeDeck.current;
       if (event.code === 'Space') {
@@ -461,7 +463,7 @@ export default function App() {
         {requiresReload&&<button type="button" className="audio-recovery" onClick={()=>{document.querySelector<HTMLDetailsElement>('.session-menu')!.open=true;document.querySelector<HTMLButtonElement>('.audio-session__recovery button')?.focus();}}>{t("Restore audio")}</button>}
         <details className="session-menu"><summary aria-label={t("Audio session and demo tracks")}><Icon name="power" /></summary><div className="session-menu__content">
         <button type="button" className="audio-start" aria-label={t("Start audio")} disabled={requiresReload} onClick={() => run(() => engine.initializeFromGesture())}>{t("Start audio")}</button>
-        <button type="button" className="audio-start" aria-label={t("Load demo decks")} disabled={Boolean(loadingByDeck.A || loadingByDeck.B)} onClick={() => run(loadDemoDecks)}>{t("Replace both with demos")}</button>
+        <button type="button" className="audio-start" disabled={Boolean(loadingByDeck.A || loadingByDeck.B)} onClick={() => run(loadDemoDecks)}>{t("Replace both with demos")}</button>
         <button type="button" className="audio-secondary" aria-label={t("Suspend audio")} disabled={snapshot.contextState !== 'running'} onClick={() => run(() => engine.suspend())}>{t("Suspend")}</button>
         {requiresReload && <div className="audio-session__recovery"><p>{t("Reload clears this session; add local files again.")}</p><button type="button" className="audio-secondary" onClick={() => window.location.reload()}>{t("Reload app")}</button></div>}
         </div></details>

@@ -32,3 +32,11 @@
  .app-shell{height:auto;min-height:calc(100svh - 2 * var(--frame-inset,8px));grid-template-rows:var(--header-height) 56px var(--wave-height) var(--shell-gap) minmax(412px,1fr) var(--shell-gap) var(--dock-height) 24px}
  .workspace-tools{grid-row:2;min-height:56px;padding:6px 0}
 }
+
+/* Short desktop screens (e.g. 768px tall): tighten the session-tools, waveform and
+   dock rows so the console fits without a page scroll. */
+@media(min-width:900px) and (min-height:640px) and (max-height:820px) and (pointer:fine), (min-width:1181px) and (max-height:820px){
+ :root{--wave-height:80px;--dock-height:116px}
+ .app-shell{grid-template-rows:var(--header-height) 44px var(--wave-height) var(--shell-gap) minmax(412px,1fr) var(--shell-gap) var(--dock-height) 24px}
+ .workspace-tools{min-height:44px;padding:0}
+}
