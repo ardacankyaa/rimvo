@@ -42,6 +42,11 @@ export function t<T>(value: T): T {
     const detail = cause && Object.hasOwn(turkish, cause) ? turkish[cause] : cause;
     return `${subject} ${id} kanalına yüklenemedi.${detail ? ` ${detail}` : ''}` as T;
   }
+  const adding = text.match(/^Adding (\d+) local tracks?( to Deck ([AB]))?…$/);
+  if (adding) return (adding[3] ? `${adding[1]} yerel parça ${adding[3]} kanalına ekleniyor…` : `${adding[1]} yerel parça ekleniyor…`) as T;
+  const unloaded = text.match(/^Unloaded Deck ([AB])\.$/); if (unloaded) return `${unloaded[1]} kanalı boşaltıldı.` as T;
+  const removed = text.match(/^Removed (.+) from the library\. Loaded audio keeps playing\.$/s);
+  if (removed) return `${removed[1]} kütüphaneden kaldırıldı. Yüklü ses çalmaya devam ediyor.` as T;
   const download = text.match(/^Download requested: (.+)$/s);
   if (download) return `İndirme istendi: ${download[1]}` as T;
   const deck = text.match(/^(.*?)(?: ([AB]))$/);

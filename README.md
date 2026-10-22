@@ -20,6 +20,7 @@
 - **Creative Transitions & FX:** Dedicated transition canvas (Air, Echo, Sweep), 3-band EQ, resonant filters, flanger, tremolo, and overdrive.
 - **Stereo Recording:** Real-time capture of the limiter-guarded master output with versioned downloads. Choose lossless WAV or MP3 at 320 kbps; MP3 conversion runs locally in a background worker.
 - **Responsive UI:** Dark and light themes, keyboard shortcuts, and multi-touch controls for touch screens.
+- **Works offline:** After the first visit, the hosted build opens without a connection. Demo tracks you have opened stay available offline.
 
 ## Getting Started
 
@@ -98,6 +99,7 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 │   ├── legal/           # Privacy policy and local preference persistence
 │   ├── i18n/            # English / Turkish interface copy and language preference
 │   ├── library/         # Track metadata parser and library management
+│   ├── pwa/             # Offline service worker emitted by production builds
 │   ├── recording/       # Stereo capture, WAV encoding and MP3 export worker
 │   ├── session/         # Validated local session storage and explicit restoration
 │   ├── state/           # Engine singleton and immutable UI state snapshots
@@ -114,7 +116,7 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 
 ## Privacy & Security
 
-RIMVO processes your audio on your device and does not upload personal music or recordings. Explicit session saves use IndexedDB (`rimvo-sessions`); delete the save from the Session menu or clear site data. Language uses localStorage (`rimvo-language`); optional theme storage is controlled in the Cookies panel. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry and never requests microphone access. Separate headphone output may request speaker-selection permission.
+RIMVO processes your audio on your device and does not upload personal music or recordings. Explicit session saves use IndexedDB (`rimvo-sessions`), with each file stored as its own record so saving and restoring hold one file in memory at a time; delete the save from the Session menu or clear site data. Language uses localStorage (`rimvo-language`); production builds cache application files and opened demo tracks in Cache Storage (`rimvo-app-*`, `rimvo-runtime-*`) so the console opens offline after the first visit; optional theme storage is controlled in the Cookies panel. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry and never requests microphone access. Separate headphone output may request speaker-selection permission.
 
 ## License
 

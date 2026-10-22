@@ -114,7 +114,7 @@ test('a corrupt save is explained and can be deleted without decoding it', async
     IDBObjectStore.prototype.put = () => { throw new DOMException('Device storage is full.', 'QuotaExceededError'); };
   });
   await page.getByRole('button', { name: 'Save session on this device', exact: true }).click();
-  await expect(page.getByRole('status', { name: 'Session status' })).toContainText('Device storage is full.');
+  await expect(page.getByRole('status', { name: 'Session status' })).toContainText('Device storage may be full; the previous save is preserved.');
   await expect(page.getByRole('status', { name: 'Session status' })).toContainText('invalid');
   await page.getByRole('button', { name: 'Delete saved session', exact: true }).click();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();

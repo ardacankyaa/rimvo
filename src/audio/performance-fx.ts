@@ -51,7 +51,7 @@ export function createPerformanceFx(context: BaseAudioContext, own: <T extends A
         if (disposed) throw new Error('Performance FX are disposed.');
         if (!['drive','flanger','tremolo'].includes(setting.type)) throw new RangeError('Unsupported performance effect.');
         if (typeof setting.enabled !== 'boolean' || !Number.isFinite(setting.amount) || setting.amount < 0 || setting.amount > 1) throw new RangeError('Invalid effect intensity.');
-        if (setting.type !== 'drive' && (!Number.isFinite(setting.rate) || setting.rate < .1 || setting.rate > 8)) throw new RangeError('Effect speed must be0.1–8Hz.');
+        if (setting.type !== 'drive' && (!Number.isFinite(setting.rate) || setting.rate < .1 || setting.rate > 8)) throw new RangeError('Effect speed must be 0.1–8 Hz.');
         const amount = setting.enabled ? setting.amount : 0;
         if (setting.type === 'drive') {
           // Fixed curve avoids swapping a WaveShaper buffer while a gesture is audible.

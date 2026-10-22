@@ -3,7 +3,7 @@ export const legalTitles: Record<LegalPage, string> = {
   privacy: 'Gizlilik', cookies: 'Çerezler ve tercihler', terms: 'Kullanım koşulları',
 };
 export interface PolicySection { readonly heading: string; readonly paragraphs: readonly string[] }
-export const policyVersion = '2026-10-20';
+export const policyVersion = '2026-10-22';
 export const hostingReferences = {
   tr: [
     { label: 'GitHub Pages: veri toplama', href: 'https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages' },
@@ -24,7 +24,7 @@ export const policies: Record<LegalPage, readonly PolicySection[]> = {
       'Mix kaydı yalnız sen başlattığında, uygulamanın ses çıkışından oluşturulur. Kayıt ve yeni sürümleri cihazına indirilebilir veya cihazının paylaşım menüsüne gönderilebilir. Kaynak ses dosyalarının üzerine yazılmaz. Paylaşımı onayladığında seçtiğin uygulama ya da hizmetin gizlilik koşulları geçerlidir.',
       'Parçalar ve kayıtlar önce oturum belleğinde tutulur. Oturum menüsünden açıkça kaydedersen kaynak dosyalar, cue noktaları, miks ayarları ve durdurulmuş kayıt bu cihazda rimvo-sessions adlı IndexedDB alanına yazılır (en fazla 256 MiB). Oturumu geri yüklemek müziği kendiliğinden başlatmaz. Kaydetmeden sayfayı kapatmak çalışmanı kaybettirebilir. Tarayıcı cihaz verilerini silebilir; önemli kayıtları ayrıca indir.',
       'Seçtiğin dil rimvo-language anahtarında yerel olarak hatırlanır. Ayrı kulaklık çıkışı isteğe bağlıdır; destekleyen tarayıcı ses çıkışı seçme izni isteyebilir. Mikrofon kullanılmaz. Kulaklık ön dinlemesi ana miks kaydına eklenmez.',
-      'Tema tercihi yalnız Çerezler ve tercihler bölümündeki seçeneği açarsan cihazda hatırlanır. Kapatmak saklanan tercihi siler. Tarayıcının önbelleği, normal site dosyalarının yerel kopyalarını ayrıca tutabilir.',
+      'Tema tercihi yalnız Çerezler ve tercihler bölümündeki seçeneği açarsan cihazda hatırlanır. Kapatmak saklanan tercihi siler. Uygulamanın çevrimdışı açılabilmesi için uygulama dosyaları ve açtığın örnek parçalar tarayıcının önbelleğinde (rimvo-app ve rimvo-runtime adlı Cache Storage alanları) tutulur. Bu önbellek senin müziğini veya kayıtlarını içermez.',
     ] },
     { heading: 'İnternet ve barındırma', paragraphs: [
       'Resmî web kopyasında uygulama dosyaları ve örnek parçalar GitHub Pages üzerinden alınır. GitHub, GitHub Pages sitelerini ziyaret edenlerin IP adreslerinin, GitHub hesabıyla oturum açmış olsun ya da olmasın, güvenlik amacıyla kaydedilip saklandığını belirtir. GitHub Gizlilik Açıklaması ayrıca IP adresi ve istek tarih/saatini hizmet kullanım verileri arasında sayar. Ayrıntılar için bu bölümün sonundaki GitHub kaynaklarına bak.',
@@ -47,7 +47,7 @@ export const policies: Record<LegalPage, readonly PolicySection[]> = {
       'Seçim 180 gün boyunca hatırlanır; süre dolunca sonraki açılışta silinir. Aşağıdaki seçeneği kapatarak daha erken silebilirsin. Kapalıyken tema bu oturumda değiştirilebilir, sonraki açılışta varsayılan koyu tema kullanılır. Tercihi reddetmek DJ kontrollerini veya kaydı sınırlamaz.',
     ] },
     { heading: 'Tarayıcı ve yayımlanan kopyalar', paragraphs: [
-      'Tarayıcı, sitenin normal dosyalarını kendi önbelleğinde saklayabilir. Site verilerini tarayıcı ayarlarından temizleyebilirsin. İnternette yayımlanan bir kopyaya başka çerez, analiz veya hizmet eklenirse bu metin ve gerekli tercih mekanizması o dağıtım için güncellenmelidir.',
+      'RIMVO, çevrimdışı çalışabilmek için kendi uygulama dosyalarını ve açtığın örnek parçaları Cache Storage içinde (rimvo-app, rimvo-runtime) saklar; tarayıcı da normal site dosyalarını önbelleğe alabilir. Bu önbellek kişisel ses dosyası veya kayıt içermez ve bir sunucuya gönderilmez. Site verilerini tarayıcı ayarlarından temizleyebilirsin. İnternette yayımlanan bir kopyaya başka çerez, analiz veya hizmet eklenirse bu metin ve gerekli tercih mekanizması o dağıtım için güncellenmelidir.',
     ] },
   ],
   terms: [
@@ -77,7 +77,7 @@ export const englishPolicies: Record<LegalPage, readonly PolicySection[]> = {
     { heading: 'Recordings and saved sessions', paragraphs: [
       'Recording starts only when you choose it and captures the master mix. Downloads and sharing create new copies; original tracks stay unchanged. When you approve sharing, the chosen service handles that copy under its own terms.',
       'Tracks and recordings initially live in memory. Save session explicitly stores source files, cues, effects, mixer controls and a stopped take in the rimvo-sessions IndexedDB database on this device, up to 256 MiB. Restoring never starts playback automatically. Closing the page without saving can lose work. Browser storage can be cleared, so download important recordings separately.',
-      'Your chosen language is remembered locally under rimvo-language. Theme storage is optional. Separate headphone monitoring may request speaker-selection permission in a supporting browser, never microphone access. The monitor signal is not added to the master recording.',
+      'Your chosen language is remembered locally under rimvo-language. Application files and opened demo tracks are cached in Cache Storage so RIMVO can open offline. Theme storage is optional. Separate headphone monitoring may request speaker-selection permission in a supporting browser, never microphone access. The monitor signal is not added to the master recording.',
     ] },
     { heading: 'Hosting and control', paragraphs: [
       'Application files and bundled demos on the official website come from GitHub Pages. GitHub says it logs and stores visitors’ IP addresses for security purposes, whether or not they are signed in. Its Privacy Statement also lists IP addresses and request times as Service Usage Information. See the GitHub sources linked at the end of this section. These hosting records are separate from the app: selected audio, metadata, artwork, saved sessions and recordings are processed in the browser and are not sent to RIMVO’s server. A copy hosted elsewhere may follow that provider’s practices.',
@@ -88,7 +88,7 @@ export const englishPolicies: Record<LegalPage, readonly PolicySection[]> = {
     { heading: 'No tracking cookies', paragraphs: ['RIMVO does not create advertising, analytics or third-party tracking cookies and does not use document.cookie. There is no accept-all requirement.'] },
     { heading: 'Language and sessions', paragraphs: ['Choosing a language stores rimvo-language in localStorage. Saving a session explicitly writes to IndexedDB. You can delete the saved session from its menu or clear all site data in browser settings. This data is not uploaded.'] },
     { heading: 'Optional theme preference', paragraphs: ['The option below starts off. Enabling it stores the dark/light theme under rimvo-theme and the preference version and expiry under rimvo-preferences in localStorage for 180 days. Disabling it deletes these entries. This preference contains no music, identity, advertising profile or usage history. Declining it does not limit the mixer or recording.'] },
-    { heading: 'Browser cache', paragraphs: ['Your browser may cache ordinary application files. Clear site data in browser settings to remove them. Deployments that add services or tracking must update this information and any required controls.'] },
+    { heading: 'Browser cache', paragraphs: ['For offline use, RIMVO keeps its application files and any demo tracks you open in Cache Storage (rimvo-app and rimvo-runtime). This cache holds no personal music or recordings and is not uploaded. Your browser may also cache ordinary site files. Clear site data in browser settings to remove them. Deployments that add services or tracking must update this information and any required controls.'] },
   ],
   terms: [
     { heading: 'Create with RIMVO', paragraphs: ['RIMVO lets you play and mix two tracks locally, apply effects and record a new output file. Original tracks stay unchanged. Use content you have permission to use and obtain the necessary rights before distributing or publicly playing your mix. RIMVO does not acquire music rights for you.'] },
