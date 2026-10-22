@@ -1,7 +1,7 @@
 {
   "name": "rimvo",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "A local-first browser DJ console with two decks, creative transitions and stereo WAV/MP3 recording exports.",
   "license": "MIT",
