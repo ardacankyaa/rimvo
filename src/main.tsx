@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { ErrorBoundary } from './ui/ErrorBoundary'
+import { engine } from './state/engine'
 import './styles.css'
 import './workspace-tools.css'
 
@@ -13,6 +15,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    {/* Silence the decks rather than leaving audio running behind the error screen. */}
+    <ErrorBoundary onError={() => { void engine.suspend().catch(() => undefined) }}>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

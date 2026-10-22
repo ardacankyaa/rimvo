@@ -250,6 +250,8 @@ export const turkish: Record<string, string> = {
   'Close other RIMVO tabs and try again.': 'Diğer RIMVO sekmelerini kapatıp yeniden dene.', 'The session could not be saved. Device storage may be full; the previous save is preserved.': 'Oturum kaydedilemedi. Cihaz depolaması dolu olabilir; önceki kayıt korunuyor.',
   'The saved session could not be read.': 'Kayıtlı oturum okunamadı.', 'The saved session could not be deleted.': 'Kayıtlı oturum silinemedi.',
   'Removed track from the library.': 'Parça kütüphaneden kaldırıldı.', 'The saved audio is missing or invalid.': 'Kayıtlı ses eksik veya geçersiz.',
+  'Something went wrong': 'Bir sorun oluştu', 'Technical details': 'Teknik ayrıntılar',
+  'RIMVO hit an unexpected problem and stopped the audio. Reload to continue. A session you saved is still on this device; changes after that save are lost.': 'RIMVO beklenmeyen bir sorunla karşılaştı ve sesi durdurdu. Devam etmek için sayfayı yenile. Kaydettiğin oturum bu cihazda duruyor; o kayıttan sonraki değişiklikler kayboldu.',
 };
 
 export const english: Record<string, string> = {

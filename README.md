@@ -54,17 +54,22 @@
 
 Choose **Try a mix** to load the two bundled demo tracks. Press **Play both**, move the crossfader, and try the effects. Use the recording control to capture the master output, then stop and choose WAV or MP3 to download your mix. Loading tracks does not start playback automatically.
 
-### Current limits
+### Sessions, headphones and language
 
-- Each track is limited to 8 minutes, 128 MiB of source data, and 192 MiB of decoded audio.
-- Recording stops at the earlier of 15 minutes or 128 MiB of captured PCM data. At 48 kHz this is about 11 minutes 39 seconds.
-- **Session → Save session on this device** stores your library files, deck positions, cues, beat grids, loops, effects, mixer settings and stopped take locally (up to 256 MiB). Restore explicitly after reopening; playback stays paused. Browser storage can be cleared, so download important recordings separately. There is one saved session per site/device; saving again replaces it.
-- **Headphones** routes selected decks before the crossfader to a separate audio output in browsers supporting speaker selection. Connect an additional output/audio interface and choose a different device from the main speakers. This monitor signal is excluded from recordings. Unsupported browsers show an explanation and keep the main mixer available.
-- Choose **EN / TR** for English or Turkish. Your selected language is remembered on this device; library search uses that language's case rules, including Turkish dotted and dotless I.
-- Session tools refresh saved-session availability across tabs and read the latest device save before restoring. Unreadable saves show a recovery message and can be deleted explicitly. Opening Session or Headphones closes the other panel; Escape closes it and returns focus to its button.
-- Session restore preserves the selected speed/tone mode, stored semitone value and exact loop bounds, including beat loops whose BPM grid was edited after creation.
-- Recording shows remaining time and warns during the final minute. Discarding an unsaved take requires confirmation; MP3 conversion shows progress and can be cancelled back to WAV.
-- BPM and key are estimates; use manual adjustments when needed. Browser and device support, memory, and audio hardware affect performance.
+- **Session → Save session on this device** keeps your library files, cues, loops, effects, mixer settings and a stopped take in this browser. Restore it after reopening; playback stays paused. There is one saved session per device, and saving again replaces it.
+- **Headphones** sends chosen decks to a second audio output before the crossfader, in browsers that support speaker selection. This signal is never recorded.
+- **EN / TR** switches the interface between English and Turkish and is remembered on this device.
+
+### Limits
+
+| | Limit |
+| :--- | :--- |
+| Track length | 8 minutes |
+| Track file size | 128 MiB (192 MiB once decoded) |
+| Recording | 15 minutes or 128 MiB, whichever comes first (about 11 min 39 s at 48 kHz) |
+| Saved session | 256 MiB |
+
+BPM and key are estimates; adjust them manually when needed. Browser storage can be cleared, so download important recordings. Performance depends on your browser, device memory and audio hardware.
 
 ## Available Scripts
 
@@ -118,10 +123,16 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 
 RIMVO processes your audio on your device and does not upload personal music or recordings. Explicit session saves use IndexedDB (`rimvo-sessions`), with each file stored as its own record so saving and restoring hold one file in memory at a time; delete the save from the Session menu or clear site data. Language uses localStorage (`rimvo-language`); production builds cache application files and opened demo tracks in Cache Storage (`rimvo-app-*`, `rimvo-runtime-*`) so the console opens offline after the first visit; optional theme storage is controlled in the Cookies panel. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry and never requests microphone access. Separate headphone output may request speaker-selection permission.
 
+Please report security problems privately as described in [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks to run and the release steps.
+
 ## License
 
 Project-authored application and test code is licensed under the [MIT License](LICENSE), copyright 2026 Arda Çankaya and RIMVO contributors. Preserve the copyright and MIT permission notice when redistributing copies or substantial portions. The MIT grant is unchanged. See [reuse and indexing guidance](ATTRIBUTION.md) for file-level attribution and exclusions.
 Bundled demo tracks and artwork are dedicated to the public domain under [CC0 1.0 Universal](public/demo-tracks/LICENSE.txt).
-Dependencies and generic interface icons retain their own licenses and attribution. See the [distribution notices](public/THIRD_PARTY_LICENSES.txt), including the MP3 encoder's LGPL-3.0 notice. Dependency names, copyright notices, and compatibility identifiers identify technical components; the application's name and visual identity are RIMVO.
+Dependencies and generic interface icons retain their own licenses and attribution. See the [distribution notices](public/THIRD_PARTY_LICENSES.txt), including the MP3 encoder's LGPL-3.0 notice. Dependency names, copyright notices, and compatibility identifiers identify technical components; the application's name and visual identity are RIMVO. `THIRD_PARTY_LICENSES.txt` holds every license notice; `THIRD-PARTY-NOTICES.txt` is the short notice for the LGPL MP3 encoder.
 
 The public distribution includes full [LGPL-3.0](public/licenses/LGPL-3.0.txt) and [GPL-3.0](public/licenses/GPL-3.0.txt) texts, preferred dependency sources, their original notices, pinned provenance and checksums. [Source and rebuild instructions](public/SOURCE_CODE.md) explain how to rebuild the MP3 encoder and recombine it with the MIT application. The source archives keep their upstream licenses; they are not relicensed as MIT. Run `npm run check:licenses` to verify the distribution materials, or `npm run check:licenses -- --dist` after building.
