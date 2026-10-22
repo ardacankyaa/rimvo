@@ -6,9 +6,9 @@ Project-authored RIMVO code is copyright 2026 Arda Çankaya and RIMVO contributo
 
 The runtime application/worker sources, build configuration, dependency lockfile and original assets used by this distribution are available at this immutable revision:
 
-https://github.com/ardacankyaa/rimvo/tree/45e604eee0d21d5013102fe3d917639842c65afb
+https://github.com/ardacankyaa/rimvo/tree/78a019aae2f7d784e836cac3578ccf616f0dbe42
 
-This revision includes per-file session storage, offline support, the completed Turkish messages and the interface error screen. `source/manifest.json` records a normalized runtime-source digest as a guard against accidentally leaving this reference stale. The latest repository additionally contains these licensing materials:
+This revision includes per-file session storage, offline support, the completed Turkish messages, the interface error screen and live deck time. `source/manifest.json` records a normalized runtime-source digest as a guard against accidentally leaving this reference stale. The latest repository additionally contains these licensing materials:
 
 https://github.com/ardacankyaa/rimvo
 
