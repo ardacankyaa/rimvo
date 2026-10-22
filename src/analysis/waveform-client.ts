@@ -66,6 +66,7 @@ export function analyzeWaveformInWorker(
     const abort = (): void => finish(() => reject(new DOMException('The operation was aborted.', 'AbortError')));
     signal?.addEventListener('abort', abort, { once: true });
     worker.onerror = event => finish(() => reject(new Error(event.message || 'Waveform worker failed.')));
+    worker.onmessageerror = () => finish(() => reject(new Error('The audio file could not be analysed.')));
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const response = event.data;
       if (response.id !== id) return;

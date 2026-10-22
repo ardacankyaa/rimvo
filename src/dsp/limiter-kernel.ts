@@ -11,11 +11,14 @@ export class SamplePeakLimiterKernel {
   private readonly delayRight: Float32Array;
   private readonly peakIndexes: Float64Array;
   private readonly peakValues: Float32Array;
+  /** Windowed minimum gains; their moving average ramps reduction across the lookahead. */
+  private readonly gainHistory: Float64Array;
   private readonly releaseCoefficient: number;
   private writeIndex = 0;
   private frameIndex = 0;
   private dequeHead = 0;
   private dequeTail = 0;
+  private gainHistoryIndex = 0;
   private gain = 1;
   private disposed = false;
 
@@ -43,6 +46,7 @@ export class SamplePeakLimiterKernel {
     const queueCapacity = this.lookaheadFrames + 2;
     this.peakIndexes = new Float64Array(queueCapacity);
     this.peakValues = new Float32Array(queueCapacity);
+    this.gainHistory = new Float64Array(this.lookaheadFrames).fill(1);
     this.releaseCoefficient = Math.exp(-1 / (sampleRate * releaseMs / 1000));
   }
 
@@ -59,6 +63,9 @@ export class SamplePeakLimiterKernel {
       return;
     }
 
+    // Re-summed per block so the running average cannot drift.
+    let gainSum = 0;
+    for (const value of this.gainHistory) gainSum += value;
     for (let index = 0; index < frameCount; index += 1) {
       const rawLeft = inputLeft[index];
       const rawRight = inputRight[index];
@@ -91,7 +98,12 @@ export class SamplePeakLimiterKernel {
       this.writeIndex = (this.writeIndex + 1) % this.lookaheadFrames;
 
       const windowPeak = this.peakValues[this.dequeHead % this.peakValues.length];
-      const targetGain = windowPeak > this.ceiling ? this.ceiling / windowPeak : 1;
+      const windowGain = windowPeak > this.ceiling ? this.ceiling / windowPeak : 1;
+      // Every averaged gain covers the delayed sample, so the ramp completes before the peak leaves the delay line.
+      gainSum += windowGain - this.gainHistory[this.gainHistoryIndex];
+      this.gainHistory[this.gainHistoryIndex] = windowGain;
+      this.gainHistoryIndex = (this.gainHistoryIndex + 1) % this.lookaheadFrames;
+      const targetGain = Math.min(1, gainSum / this.lookaheadFrames);
       if (targetGain < this.gain) {
         this.gain = targetGain;
       } else {
@@ -122,6 +134,7 @@ export class SamplePeakLimiterKernel {
     this.delayRight.fill(0);
     this.peakIndexes.fill(0);
     this.peakValues.fill(0);
+    this.gainHistory.fill(0);
     this.dequeHead = 0;
     this.dequeTail = 0;
     this.gain = 0;

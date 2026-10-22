@@ -42,6 +42,10 @@ export function t<T>(value: T): T {
     const detail = cause && Object.hasOwn(turkish, cause) ? turkish[cause] : cause;
     return `${subject} ${id} kanalına yüklenemedi.${detail ? ` ${detail}` : ''}` as T;
   }
+  const gridChoice = text.match(/^Use (\d+(?:\.\d+)?) BPM grid ([AB])$/);
+  if (gridChoice) return `${gridChoice[2]} için ${gridChoice[1]} BPM ızgarasını kullan` as T;
+  const estimate = text.match(/^Use this beat estimate \((\d+)% confidence\)$/);
+  if (estimate) return `Bu vuruş tahminini kullan (%${estimate[1]} güven)` as T;
   const adding = text.match(/^Adding (\d+) local tracks?( to Deck ([AB]))?…$/);
   if (adding) return (adding[3] ? `${adding[1]} yerel parça ${adding[3]} kanalına ekleniyor…` : `${adding[1]} yerel parça ekleniyor…`) as T;
   const unloaded = text.match(/^Unloaded Deck ([AB])\.$/); if (unloaded) return `${unloaded[1]} kanalı boşaltıldı.` as T;

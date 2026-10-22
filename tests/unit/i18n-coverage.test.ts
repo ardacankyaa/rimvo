@@ -64,6 +64,8 @@ describe('Turkish translation coverage', () => {
     ['Unloaded Deck A.', 'A kanalı boşaltıldı.'],
     ['Removed Deck A Anthem from the library. Loaded audio keeps playing.', 'Deck A Anthem kütüphaneden kaldırıldı. Yüklü ses çalmaya devam ediyor.'],
     ['Removed track from the library.', 'Parça kütüphaneden kaldırıldı.'],
+    ['Use 120.0 BPM grid A', 'A için 120.0 BPM ızgarasını kullan'],
+    ['Use this beat estimate (82% confidence)', 'Bu vuruş tahminini kullan (%82 güven)'],
   ])('translates the dynamic status %s', (source, expected) => {
     setLanguage('tr');
     expect(t(source)).toBe(expected);

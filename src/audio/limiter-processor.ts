@@ -10,7 +10,6 @@ class MasterLimiterProcessor extends AudioWorkletProcessor {
       if (event.data?.type === 'dispose') {
         this.kernel.dispose();
         this.disposed = true;
-        this.port.postMessage({ type: 'disposed' });
       }
     };
   }

@@ -19,7 +19,6 @@ class DualDeckTransportProcessor extends AudioWorkletProcessor {
     B: { left: new Float32Array(0), right: new Float32Array(0) },
   };
   private readonly pendingClear: Record<DeckId, AckableTransportCommand | null> = { A: null, B: null };
-  private readonly pendingCue: Record<DeckId, AckableTransportCommand | null> = { A: null, B: null };
   private readonly scheduled = new FrameCommandQueue<ScheduledCommand>(256);
   private nextSnapshotFrame = Math.round(sampleRate / 30);
   private disposed = false;
@@ -53,11 +52,6 @@ class DualDeckTransportProcessor extends AudioWorkletProcessor {
         if (pending && !this.kernel.hasDeck(deckId)) {
           this.pendingClear[deckId] = null;
           this.postAck(pending, this.kernel.getClearAppliedFrame(deckId));
-        }
-        const cue = this.pendingCue[deckId];
-        if (cue && !this.kernel.isCuePending(deckId)) {
-          this.pendingCue[deckId] = null;
-          this.postAck(cue, this.kernel.readPosition(deckId).contextFrame);
         }
       }
       if (currentFrame >= this.nextSnapshotFrame) {
@@ -123,7 +117,7 @@ class DualDeckTransportProcessor extends AudioWorkletProcessor {
       return;
     }
     if (command.type === 'scratch-update' || command.type === 'grid') {
-      if (this.pendingClear[command.deckId] || this.pendingCue[command.deckId]) return;
+      if (this.pendingClear[command.deckId]) return;
       const current = this.kernel.readPosition(command.deckId);
       if (current.trackRevision !== command.trackRevision) return;
       try {
@@ -132,7 +126,7 @@ class DualDeckTransportProcessor extends AudioWorkletProcessor {
       } catch { /* Continuous input and grid settings are bounded at the public engine boundary. */ }
       return;
     }
-    if (this.pendingClear[command.deckId] || this.pendingCue[command.deckId]) {
+    if (this.pendingClear[command.deckId]) {
       this.postError(command, 'queue-full', 'A deck transition is still fading out.');
       return;
     }
@@ -167,7 +161,7 @@ class DualDeckTransportProcessor extends AudioWorkletProcessor {
   private applyScheduled(command:ScheduledCommand,frame:number):void {
     const commands=command.type==='transport-pair'?command.commands:[command];
     for(const item of commands){
-      if(this.pendingClear[item.deckId]||this.pendingCue[item.deckId]){this.rejectScheduled(command,'queue-full','A deck transition is still fading out.');return;}
+      if(this.pendingClear[item.deckId]){this.rejectScheduled(command,'queue-full','A deck transition is still fading out.');return;}
       if(this.kernel.readPosition(item.deckId).trackRevision!==item.trackRevision){this.rejectScheduled(command,'stale-load','Scheduled command belongs to an older track revision.');return;}
     }
     // Both decks arrive and validate in one worklet event, even if the requested frame is late.
@@ -189,11 +183,6 @@ class DualDeckTransportProcessor extends AudioWorkletProcessor {
         }
         case 'play': this.kernel.playDeck(command.deckId); this.postAck(command, appliedFrame); return;
         case 'pause': this.kernel.pauseDeck(command.deckId); this.postAck(command, appliedFrame); return;
-        case 'cue':
-          this.kernel.cueDeck(command.deckId);
-          if (this.kernel.isCuePending(command.deckId)) this.pendingCue[command.deckId] = command;
-          else this.postAck(command, appliedFrame);
-          return;
         case 'seek': this.kernel.seekDeck(command.deckId, command.mediaFrame); this.postAck(command, appliedFrame); return;
         case 'loop': this.kernel.setLoop(command.deckId, command.loop); this.postAck(command, appliedFrame); return;
         case 'tempo': this.kernel.setTempoPercent(command.deckId, command.tempoPercent); this.postAck(command, appliedFrame); return;

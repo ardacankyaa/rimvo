@@ -109,4 +109,22 @@ describe('native FX ownership and failure cleanup', () => {
         expect(stub.nodes.map(node => [node.gain.value, node.delayTime.value])).toEqual(values);
         strip.dispose();
     });
+    it('taps headphone cue after EQ, filter and FX but before the channel fader', async () => {
+        vi.useFakeTimers();
+        const stub = nativeStub(), strip = createDeckGraph(stub.context, 'A');
+        const reaches = (from: Node, to: Node): boolean => { const seen = new Set<Node>(), queue = [from]; while (queue.length) { const node = queue.shift()!; if (node === to) return true; if (seen.has(node)) continue; seen.add(node); queue.push(...node.edges); } return false; };
+        const input = strip.input as unknown as Node, preFader = strip.preFader as unknown as Node, output = strip.output as unknown as Node;
+        expect(reaches(input, preFader)).toBe(true);
+        expect([...preFader.edges]).toHaveLength(1);
+        const volume = [...preFader.edges][0];
+        expect([...volume.edges]).toEqual([output]);
+        strip.setVolume(0);
+        expect(volume.gain.value).toBe(0);
+        expect(preFader.gain.value).toBe(1);
+        const reset = strip.resetFx();
+        await vi.advanceTimersByTimeAsync(25);
+        await reset;
+        expect(reaches(input, preFader)).toBe(true);
+        strip.dispose();
+    });
 });

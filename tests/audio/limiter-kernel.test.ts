@@ -77,4 +77,25 @@ describe('SamplePeakLimiterKernel', () => {
     expect(outputLeft.at(-1)).toBeLessThanOrEqual(ceiling + 1e-6);
     limiter.dispose();
   });
+  it('ramps gain reduction across the lookahead instead of stepping on a sudden peak', async () => {
+    const limiter = await createLimiter();
+    if (!limiter) return;
+
+    const lookahead = 144, ceiling = 10 ** (-1 / 20);
+    const input = new Float32Array(6000).fill(0.5);
+    input.fill(4, 2000, 2400);
+    const outputLeft = new Float32Array(input.length);
+    const outputRight = new Float32Array(input.length);
+    limiter.processInto(input, input, outputLeft, outputRight);
+
+    expect(Math.max(...outputLeft.map(Math.abs))).toBeLessThanOrEqual(ceiling + 1e-6);
+    expect(outputLeft[2000 + lookahead]).toBeCloseTo(ceiling, 4);
+    let largestStep = 0;
+    for (let frame = lookahead + 1; frame < input.length; frame += 1) {
+      const step = Math.abs(outputLeft[frame] / input[frame - lookahead] - outputLeft[frame - 1] / input[frame - 1 - lookahead]);
+      largestStep = Math.max(largestStep, step);
+    }
+    expect(largestStep).toBeLessThan(0.01);
+    limiter.dispose();
+  });
 });

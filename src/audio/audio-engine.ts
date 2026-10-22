@@ -79,7 +79,7 @@ interface PendingCommand {
   readonly reject: (reason: AudioEngineError) => void;
   timeout: ReturnType<typeof setTimeout> | null;
 }
-type CommandKind = 'install' | 'clear' | 'play' | 'pause' | 'cue' | 'seek' | 'loop' | 'tempo' | 'scratch-begin' | 'scratch-end' | 'nudge' | 'nudge-hold' | 'sync';
+type CommandKind = 'install' | 'clear' | 'play' | 'pause' | 'seek' | 'loop' | 'tempo' | 'scratch-begin' | 'scratch-end' | 'nudge' | 'nudge-hold' | 'sync';
 type CommandDetails = {
   readonly trackRevision?: number; readonly channels?: Float32Array[]; readonly mediaFrame?: number;
   readonly loop?: { startFrame: number; endFrame: number } | null; readonly loopBeats?: BeatDivision | null;
@@ -240,7 +240,7 @@ export class BrowserAudioEngine implements AudioEngine {
   restoreRecording(wav: Blob) { this.assertNotDisposed(); return this.recorder.restore(wav); }
   getHeadphoneStream(): MediaStream {
     this.assertNotDisposed(); this.assertRunning();
-    this.headphoneMonitor ??= createHeadphoneMonitor(this.context!, { A: this.graph!.decks.A.output, B: this.graph!.decks.B.output });
+    this.headphoneMonitor ??= createHeadphoneMonitor(this.context!, { A: this.graph!.decks.A.preFader, B: this.graph!.decks.B.preFader });
     return this.headphoneMonitor.stream;
   }
   setHeadphoneCue(id: DeckId, enabled: boolean): void { this.getHeadphoneStream(); this.headphoneMonitor!.select(id, enabled); }
@@ -386,7 +386,8 @@ export class BrowserAudioEngine implements AudioEngine {
   async loadDeck(id: DeckId, file: File | Blob, options: { readonly signal?: AbortSignal; readonly name?: string } = {}): Promise<TrackInfo> {
     this.assertNotDisposed();
     if (options.signal?.aborted) throw this.error('aborted', 'The audio load was cancelled.', 'admission');
-    if (this.pendingDecodeCount >= 2) throw this.error('queue-full', 'Two audio load jobs are already active.', 'decode');
+    // A replacement load aborts this deck's pending jobs below, so they do not count against the limit.
+    if (this.pendingDecodeCount - (this.activeLoadControllers.get(id)?.size ?? 0) >= 2) throw this.error('queue-full', 'Two audio load jobs are already active.', 'decode');
 
     const deck = this.decks[id];
     this.cancelCuePreview(id);
@@ -498,6 +499,7 @@ export class BrowserAudioEngine implements AudioEngine {
       if (generation === deck.loadGeneration && !this.disposed) {
         deck.error = snapshotError(error);
         deck.status = deck.track ? (deck.anchor.playing ? 'playing' : 'ready') : 'error';
+        if (!deck.track && deck.bpmAnalysis.status === 'analyzing') deck.bpmAnalysis = Object.freeze({ status: 'idle', confidence: 0, candidates: Object.freeze([]) });
         this.publish();
       }
       throw error;
@@ -518,6 +520,7 @@ export class BrowserAudioEngine implements AudioEngine {
     this.cancelScratchGesture(id);
     const generation = ++deck.loadGeneration;
     this.abortDeckLoads(id);
+    const previousStatus = deck.status;
     deck.status = 'loading';
     deck.error = null;
     this.publish();
@@ -552,6 +555,12 @@ export class BrowserAudioEngine implements AudioEngine {
       deck.status = deck.loadGeneration === generation ? 'empty' : 'loading';
       this.publish();
       return ack;
+    }).catch(cause => {
+      if (!this.disposed && deck.loadGeneration === generation && deck.status === 'loading') {
+        deck.status = !deck.track ? 'empty' : previousStatus !== 'loading' ? previousStatus : deck.anchor.playing ? 'playing' : 'ready';
+        this.publish();
+      }
+      throw cause;
     });
   }
   playDeck(id: DeckId): Promise<CommandAck> {
@@ -843,7 +852,9 @@ export class BrowserAudioEngine implements AudioEngine {
       return ack;
     } catch (cause) {
       if (!this.disposed) {
-        deck.sync = Object.freeze({ status: 'unavailable', masterId, reason: 'outside-tempo-range', phaseErrorSeconds: null });
+        const stale = cause instanceof AudioEngineError && cause.code === 'stale-load';
+        const outsideRange = cause instanceof Error && /outside the supported tempo range/.test(cause.message);
+        deck.sync = Object.freeze({ status: 'unavailable', masterId, reason: stale ? 'load' : outsideRange ? 'outside-tempo-range' : null, phaseErrorSeconds: null });
         this.publish();
       }
       throw cause;
@@ -880,7 +891,7 @@ export class BrowserAudioEngine implements AudioEngine {
     this.cancelCuePreview(id);
     this.cancelScratchGesture(id);
     this.breakSyncForSeek(id);
-    const applyFrame = deck.quantize ? this.nextQuantizedBoundary(deck).applyFrame : undefined;
+    const applyFrame = deck.quantize ? this.tryQuantizedBoundary(deck)?.applyFrame : undefined;
     return this.seekClearingLoop(id, cue.positionSeconds * deck.track!.sampleRate, applyFrame);
   }
 
@@ -928,7 +939,7 @@ export class BrowserAudioEngine implements AudioEngine {
     const count = this.strictFinite(beats, -32, 32, 'Beat jump');
     if (count === 0 || !Number.isInteger(count)) throw this.error('invalid-value', 'Beat jump must be a nonzero integer between -32 and 32.', 'transport');
     const grid = this.requireTempoGrid(deck);
-    const timing = deck.quantize&&this.hasReliableGrid(deck) ? this.nextQuantizedBoundary(deck) : { applyFrame: undefined, mediaFrame: this.readPosition(id).frame };
+    const timing = (deck.quantize ? this.tryQuantizedBoundary(deck) : null) ?? { applyFrame: undefined, mediaFrame: this.readPosition(id).frame };
     const target = Math.max(0, Math.min(deck.track!.frameCount - 1, timing.mediaFrame + count * 60 * deck.track!.sampleRate / grid.bpm));
     this.cancelCuePreview(id);
     this.cancelScratchGesture(id);
@@ -1050,7 +1061,6 @@ export class BrowserAudioEngine implements AudioEngine {
     });
   }
 
-  getWaveform(id: DeckId) { return this.decks[id].track?.waveform ?? null; }
 
   subscribe(listener: () => void, id?: DeckId): () => void {
     this.assertNotDisposed();
@@ -1240,6 +1250,13 @@ export class BrowserAudioEngine implements AudioEngine {
       throw this.error('invalid-value', 'No beat boundary remains inside the track in the playback direction.', 'transport');
     }
     return { applyFrame, mediaFrame };
+  }
+
+  /** Jumps fall back to an immediate seek when no reliable grid or remaining beat boundary exists. */
+  private tryQuantizedBoundary(deck: DeckState): QuantizedBoundary | null {
+    if (!this.hasReliableGrid(deck)) return null;
+    try { return this.nextQuantizedBoundary(deck); }
+    catch (cause) { if (cause instanceof AudioEngineError && cause.code === 'invalid-value') return null; throw cause; }
   }
 
   private async clearLoopBeforeCue(id: DeckId, revision: number): Promise<CommandAck | null> {

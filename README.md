@@ -20,7 +20,7 @@
 - **Creative Transitions & FX:** Dedicated transition canvas (Air, Echo, Sweep), 3-band EQ, resonant filters, flanger, tremolo, and overdrive.
 - **Stereo Recording:** Real-time capture of the limiter-guarded master output with versioned downloads. Choose lossless WAV or MP3 at 320 kbps; MP3 conversion runs locally in a background worker.
 - **Responsive UI:** Dark and light themes, keyboard shortcuts, and multi-touch controls for touch screens.
-- **Works offline:** After the first visit, the hosted build opens without a connection. Demo tracks you have opened stay available offline.
+- **Works offline:** After the first visit, the hosted build opens without a connection. Demo tracks you have opened stay available offline until the next update.
 
 ## Getting Started
 
@@ -85,7 +85,7 @@ BPM and key are estimates; adjust them manually when needed. Browser storage can
 | `npm run typecheck`| Validates TypeScript types across the codebase |
 | `npm run check:licenses` | Verifies author notices, dependency sources and license-file integrity; add `-- --dist` after building |
 
-The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), unit/DSP tests and browser workflows on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes. Before running browser tests locally, install their runtimes with `npx playwright install chromium webkit` (Linux CI also uses `--with-deps`). Browser tests use isolated disposable contexts and the bundled test audio fixtures.
+The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), the distributed license and source checks, unit/DSP tests and browser workflows on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes. Before running browser tests locally, install their runtimes with `npx playwright install chromium webkit` (Linux CI also uses `--with-deps`). Browser tests use isolated disposable contexts and the bundled test audio fixtures.
 
 The hosted build uses `npm run build -- --base=/rimvo/` so assets, demos, and audio workers resolve under the public site's path. `npm run build` remains available for other static hosts or local previews. The public site stays available when your own computer is off.
 
@@ -98,6 +98,7 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 ├── scripts/             # License and source-distribution verification
 ├── src/
 │   ├── analysis/        # Web Worker BPM, rhythm, and spectral analysis
+│   ├── assets/          # Interface icons with their license and provenance
 │   ├── audio/           # Central audio engine, graph, and AudioWorklet processors
 │   ├── dsp/             # Pitch pipeline, resamplers, and transport kernel
 │   ├── features/        # DJ console UI components and recording controls
@@ -111,7 +112,8 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 │   ├── ui/              # Control primitives, knobs, sliders, and design tokens
 │   ├── App.tsx          # Main console container
 │   ├── main.tsx         # React root entry point
-│   └── styles.css       # Design system and themes
+│   ├── styles.css       # Design system and themes
+│   └── workspace-tools.css # Session, headphone and language toolbar
 ├── tests/               # Unit, DSP and Playwright browser test suites
 ├── index.html           # HTML entry point
 ├── package.json         # Project manifest and scripts

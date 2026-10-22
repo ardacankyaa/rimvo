@@ -153,8 +153,11 @@ export async function readTrackMetadata(file: File): Promise<LocalMetadata> {
             }
         }
     }
-    else if (text(bytes.slice(0, 4), 0) === 'fLaC') {
-        let p = 4;
+    // Some taggers put an ID3v2 tag in front of FLAC; read the FLAC metadata after it.
+    const id3End = bytes[0] === 73 && bytes[1] === 68 && bytes[2] === 51 && bytes.length >= 10 ? syncSafe(bytes, 6) + 10 + ((bytes[5] & 0x10) ? 10 : 0) : -1;
+    const flacStart = text(bytes.slice(0, 4), 0) === 'fLaC' ? 0 : id3End >= 10 && text(bytes.slice(id3End, id3End + 4), 0) === 'fLaC' ? id3End : -1;
+    if (flacStart >= 0) {
+        let p = flacStart + 4;
         while (p + 4 <= bytes.length) {
             const header = bytes[p], type = header & 127;
             const size = bytes[p + 1] * 65536 + bytes[p + 2] * 256 + bytes[p + 3];
@@ -174,7 +177,7 @@ export async function readTrackMetadata(file: File): Promise<LocalMetadata> {
                 const tags = parseComments(data);
                 title = clean(tags.TITLE || '', title);
                 artist = clean(tags.ARTIST || '', artist, 120);
-                bpm = declaredBpm(tags.BPM || tags.TEMPO || '');
+                bpm = declaredBpm(tags.BPM || tags.TEMPO || '') ?? bpm;
             }
             if (type === 6 && !image)
                 image = pictureFlac(data);

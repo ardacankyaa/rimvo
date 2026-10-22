@@ -55,8 +55,6 @@ const fixtures = [
   { name: 'm1-tone-440-mono-44100-cbr.mp3', rate: 44100, channels: 1, codec: 'libmp3lame', container: 'mp3', mode: 'cbr' },
   { name: 'm1-tone-440-stereo-48000-vbr.mp3', rate: 48000, channels: 2, codec: 'libmp3lame', container: 'mp3', mode: 'vbr' },
   { name: 'm1-tone-440-mono-44100.flac', rate: 44100, channels: 1, codec: 'flac', container: 'flac' },
-  { name: 'm1-tone-440-mono-48000.flac', rate: 48000, channels: 1, codec: 'flac', container: 'flac' },
-  { name: 'm1-tone-440-stereo-44100.flac', rate: 44100, channels: 2, codec: 'flac', container: 'flac' },
   { name: 'm1-tone-440-stereo-48000.flac', rate: 48000, channels: 2, codec: 'flac', container: 'flac' },
 ]
 
@@ -79,22 +77,18 @@ for (const fixture of fixtures) {
 
 const validWav = await readFile(resolve(fixtureDirectory, fixtures[0].name))
 await writeFile(resolve(fixtureDirectory, 'm1-corrupt.wav'), validWav.subarray(0, 128))
-await writeFile(
-  resolve(fixtureDirectory, 'm1-unsupported.txt'),
-  'RIMVO unsupported-format test fixture. Synthetic text only.\n',
-  'utf8',
-)
 
-const names = [...fixtures.map(({ name }) => name), 'm1-corrupt.wav', 'm1-unsupported.txt']
+const names = [...fixtures.map(({ name }) => name), 'm1-corrupt.wav']
 const readme = [
-  '# RIMVO M1 audio fixtures',
+  '# RIMVO audio test fixtures',
+  '',
+  'Regenerate with `node tests/fixtures/generate.mjs` (requires FFmpeg on PATH, or set FFMPEG_PATH). This also rewrites this README.',
   '',
   'All playable fixtures are deterministic, locally generated synthetic tones: a 440 Hz mono tone or 440/660 Hz stereo tones. No borrowed or copyrighted recordings are included.',
   '',
   `Generator: ${version}`,
   'Fixture source: generated for RIMVO tests; dedicated to the public domain under CC0-1.0.',
   'Corrupt WAV: the first 128 bytes of the generated PCM16 WAV, retaining its original longer RIFF/data lengths so the file is truncated.',
-  'Unsupported file: plain synthetic text with no audio payload.',
   '',
   'Files:',
   ...names.map((name) => `- ${name}`),

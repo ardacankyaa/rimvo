@@ -10,8 +10,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: rimvo-checks-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: rimvo-checks-${{ github.ref }}
+  # Superseded pull request runs are cancelled; main runs finish so a Pages deploy is never cut short.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:

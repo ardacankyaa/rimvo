@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { smoothScratchVelocity } from '../src/ui/ScratchMotion';
+import { smoothScratchVelocity } from '../../src/ui/ScratchMotion';
 describe('hand velocity filtering', () => {
   it('rejects stationary, duplicate and invalid samples', () => {
     expect(smoothScratchVelocity(1,0,.016)).toBe(0);

@@ -23,10 +23,10 @@ Run the same checks as CI:
 
 ```bash
 npm run lint
-npm run build
+npm run build -- --base=/rimvo/
+npm run check:licenses -- --dist
 npm test
 npm run test:e2e
-npm run check:licenses
 ```
 
 Install browser runtimes once with `npx playwright install chromium webkit`. On Windows, WebKit has no Web Audio, so its audio workflows are skipped locally; CI runs them on Linux.

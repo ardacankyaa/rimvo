@@ -12,7 +12,7 @@ type CommandBase = {
 export type TransportCommand =
   | TransportPair
   | (CommandBase & { readonly type: 'install'; readonly channels: Float32Array[] })
-  | (CommandBase & { readonly type: 'clear' | 'cue' | 'play' | 'pause' | 'scratch-begin' | 'scratch-end' })
+  | (CommandBase & { readonly type: 'clear' | 'play' | 'pause' | 'scratch-begin' | 'scratch-end' })
   | (CommandBase & { readonly type: 'seek'; readonly mediaFrame: number })
   | (CommandBase & { readonly type: 'loop'; readonly loop: FrameLoop | null; readonly loopBeats?: BeatDivision | null })
   | (CommandBase & { readonly type: 'tempo'; readonly tempoPercent: number })
@@ -55,7 +55,3 @@ export type TransportProcessorMessage =
       readonly positions: Readonly<Record<DeckId, TransportPosition>>;
     }
   | { readonly type: 'fault'; readonly message: string };
-
-export interface LimiterProcessorMessage {
-  readonly type: 'disposed';
-}

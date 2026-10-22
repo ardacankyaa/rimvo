@@ -9,7 +9,6 @@ type Kernel = {
   clearDeck(id: DeckId, revision: number): void;
   playDeck(id: DeckId): void;
   pauseDeck(id: DeckId): void;
-  cueDeck(id: DeckId): void;
   seekDeck(id: DeckId, frame: number): void;
   setLoop(id: DeckId, loop: { startFrame: number; endFrame: number } | null): void;
   setTempoPercent?(id: DeckId, percent: number): void;
@@ -68,7 +67,7 @@ describe('DualDeckTransportKernel', () => {
     k.setTempoPercent!('A',5);k.processInto(buffers(4800),128);expect(k.readPosition('B').rate).toBeCloseTo(105/110,4);
     k.playDeck('A');k.setTempoPercent!('A',7);k.processInto(buffers(4800),4928);expect(k.readPosition('B').rate).toBeCloseTo(107/110,4);k.dispose();
   });
-  it('renders each deck independently, anchors frames, and supports cue/seek/pause', async () => {
+  it('renders each deck independently, anchors frames, and supports seek/pause', async () => {
     const kernel = await createKernel();
     if (!kernel) return;
 
@@ -94,7 +93,7 @@ describe('DualDeckTransportKernel', () => {
 
     kernel.seekDeck('A', 1);
     expect(kernel.readPosition('A').frame).toBe(1);
-    kernel.cueDeck('A');
+    kernel.seekDeck('A', 0);
     expect(kernel.readPosition('A')).toMatchObject({ frame: 0, playing: false });
     kernel.dispose();
   });
@@ -365,6 +364,25 @@ describe('DualDeckTransportKernel beat-grid sync', () => {
       const beatError = Math.min(Math.abs(masterPhase - slavePhase), 1 - Math.abs(masterPhase - slavePhase));
       expect(beatError * 60 * sampleRate / slaveBpm).toBeLessThanOrEqual(1);
     }
+  });
+
+  it('keeps a beat-synced follower inside its active loop at the master phase', async () => {
+    const kernel = await createKernel();
+    if (!kernel?.setBeatGrid || !kernel.syncDeck) return;
+    kernel.installDeck('A', [new Float32Array(500_000).fill(0.1)], 51);
+    kernel.installDeck('B', [new Float32Array(500_000).fill(-0.1)], 52);
+    kernel.setBeatGrid('A', { bpm: 120, firstBeatFrame: 0 });
+    kernel.setBeatGrid('B', { bpm: 120, firstBeatFrame: 0 });
+    kernel.setLoop('B', { startFrame: 48_000, endFrame: 96_000 });
+    kernel.seekDeck('B', 95_000);
+    kernel.playDeck('A');
+    kernel.processInto(buffers(2400), 0);
+    kernel.syncDeck('B', 'A');
+    const frame = kernel.readPosition('B').frame;
+    expect(frame).toBeGreaterThanOrEqual(48_000);
+    expect(frame).toBeLessThan(96_000);
+    expect((frame / 24_000) % 1).toBeCloseTo((kernel.readPosition('A').frame / 24_000) % 1, 4);
+    kernel.dispose();
   });
 
   it('aligns phase on a shared processor frame and keeps matched clocks phase-locked', async () => {

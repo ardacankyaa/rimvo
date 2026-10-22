@@ -30,7 +30,8 @@ function makeStrip(id: 'A' | 'B'): DeckAudioStrip {
   return {
     id,
     input: {} as GainNode,
-    output: {} as GainNode,
+    output: { connect: vi.fn(), disconnect: vi.fn() } as unknown as GainNode,
+    preFader: { connect: vi.fn(), disconnect: vi.fn() } as unknown as GainNode,
     nodeCount: 0,
     setGainDb: vi.fn(),
     setEqDb: vi.fn(),
@@ -168,6 +169,9 @@ class TestAudioContext {
       getChannelData: () => samples,
     } as unknown as AudioBuffer);
   }
+
+  createGain(): GainNode { return { gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() } as unknown as GainNode; }
+  createMediaStreamDestination(): MediaStreamAudioDestinationNode { return { stream: { getTracks: () => [] }, disconnect: vi.fn() } as unknown as MediaStreamAudioDestinationNode; }
 
   addEventListener(type: string, listener: EventListenerOrEventListenerObject | null): void { void type; void listener; }
   removeEventListener(type: string, listener: EventListenerOrEventListenerObject | null): void { void type; void listener; }
@@ -948,6 +952,107 @@ describe('AudioContext state reporting', () => {
     engine.setGainDb('A', -3);
 
     expect(engine.getSnapshot().contextState).toBe('interrupted');
+    await engine.dispose();
+  });
+});
+
+describe('BrowserAudioEngine failure recovery', () => {
+  type Port = { onmessage: ((event: MessageEvent<TransportProcessorMessage>) => void) | null; postMessage: (command: TransportCommand, transfer?: Transferable[]) => void };
+  const seekCommand = () => mocks.commands.filter((item): item is Extract<TransportCommand, { type: 'seek' }> => item.type === 'seek').at(-1)!;
+
+  it('feeds headphone cue from the pre-fader tap, not the channel fader output', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    engine.getHeadphoneStream();
+    const decks = mocks.graphs[0].graph.decks;
+    expect(decks.A.preFader.connect).toHaveBeenCalledTimes(1);
+    expect(decks.B.preFader.connect).toHaveBeenCalledTimes(1);
+    expect(decks.A.output.connect).not.toHaveBeenCalled();
+    engine.stopHeadphoneMonitoring();
+    await engine.dispose();
+  });
+
+  it('jumps a quantized hot cue immediately when no grid or beat boundary remains', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    await engine.loadDeck('A', new Blob(['tone']), { name: 'tone.wav' });
+    engine.setQuantize('A', true);
+    engine.setHotCue('A', 0, 0.25);
+    await expect(engine.triggerHotCue('A', 0)).resolves.toMatchObject({ trackRevision: 1 });
+    expect(seekCommand()).toMatchObject({ mediaFrame: 0.25 * 44_100 });
+    expect(seekCommand().applyFrame).toBeUndefined();
+
+    engine.setBeatGrid('A', { bpm: 120, firstBeatSeconds: 0 });
+    await engine.seekDeck('A', 0.9);
+    await expect(engine.triggerHotCue('A', 0)).resolves.toMatchObject({ trackRevision: 1 });
+    expect(seekCommand()).toMatchObject({ mediaFrame: 0.25 * 44_100 });
+    expect(seekCommand().applyFrame).toBeUndefined();
+    await engine.seekDeck('A', 0.9);
+    await expect(engine.beatJump('A', -1)).resolves.toMatchObject({ trackRevision: 1 });
+    expect(seekCommand().applyFrame).toBeUndefined();
+    await engine.dispose();
+  });
+
+  it('restores deck status when an unload operation fails', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    await engine.loadDeck('A', new Blob(['tone']), { name: 'tone.wav' });
+    vi.mocked(mocks.graphs[0].graph.decks.A.resetFx).mockRejectedValueOnce(new Error('reset failed'));
+    await expect(engine.unloadDeck('A')).rejects.toThrow('reset failed');
+    expect(engine.getSnapshot().decks.A.status).toBe('ready');
+    await engine.dispose();
+  });
+
+  it('clears the analysing state when a first load fails', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    mocks.inspectAudioBlob.mockRejectedValueOnce(new AudioEngineError('corrupt-file', 'Bad file.', true, 'admission'));
+    await expect(engine.loadDeck('A', new Blob(['broken']))).rejects.toMatchObject({ code: 'corrupt-file' });
+    expect(engine.getSnapshot().decks.A).toMatchObject({ status: 'error', bpmAnalysis: { status: 'idle' } });
+    await engine.dispose();
+  });
+
+  it('accepts a replacement load while both decode slots are busy with that deck', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    let started!: () => void;
+    const held = new Promise<void>(resolve => { started = resolve; });
+    mocks.analyzeWaveformInWorker.mockImplementationOnce(async (_channels: Float32Array[], _rate: number, signal?: AbortSignal) => new Promise((_resolve, reject) => {
+      signal?.addEventListener('abort', () => reject(new DOMException('cancelled', 'AbortError')), { once: true });
+      started();
+    }));
+    const first = engine.loadDeck('A', new Blob(['first'])).catch(error => error);
+    await held;
+    const other = engine.loadDeck('B', new Blob(['other']));
+    expect(engine.getDiagnostics().pendingDecodeCount).toBe(2);
+    const replacement = engine.loadDeck('A', new Blob(['replacement']), { name: 'replacement.wav' });
+    await expect(replacement).resolves.toMatchObject({ name: 'replacement.wav' });
+    await other;
+    expect(await first).toMatchObject({ code: 'stale-load' });
+    await engine.dispose();
+  });
+
+  it('reports the tempo-range reason only for tempo-range sync failures', async () => {
+    const engine = createAudioEngine();
+    await engine.initializeFromGesture();
+    await engine.loadDeck('A', new Blob(['master']));
+    await engine.loadDeck('B', new Blob(['slave']));
+    engine.setBeatGrid('A', { bpm: 120, firstBeatSeconds: 0 });
+    engine.setBeatGrid('B', { bpm: 120, firstBeatSeconds: 0 });
+    await engine.playDeck('A');
+    const port = mocks.graphs[0].graph.transport.port as unknown as Port;
+    const normalPost = port.postMessage.bind(port);
+    let failure = 'No same-phase beat position fits within the slave track.';
+    port.postMessage = (command, transfer) => {
+      if (command.type !== 'sync' || command.masterId === null) { normalPost(command, transfer); return; }
+      mocks.commands.push(command);
+      queueMicrotask(() => port.onmessage?.({ data: { type: 'error', commandId: command.commandId, code: 'invalid-value', message: failure, trackRevision: command.trackRevision } } as MessageEvent<TransportProcessorMessage>));
+    };
+    await expect(engine.syncDeck('B', 'A')).rejects.toMatchObject({ code: 'invalid-value' });
+    expect(engine.getSnapshot().decks.B.sync).toMatchObject({ status: 'unavailable', reason: null });
+    failure = 'Sync rate is outside the supported tempo range.';
+    await expect(engine.syncDeck('B', 'A')).rejects.toMatchObject({ code: 'invalid-value' });
+    expect(engine.getSnapshot().decks.B.sync).toMatchObject({ status: 'unavailable', reason: 'outside-tempo-range' });
     await engine.dispose();
   });
 });

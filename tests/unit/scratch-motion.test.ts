@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createScratchAnchor, sampleScratchMotion } from '../src/ui/ScratchMotion';
+import { createScratchAnchor, sampleScratchMotion } from '../../src/ui/ScratchMotion';
 
 describe('scratch centre safety', () => {
   it('freezes position through the centre and reanchors without accumulated rotation', () => {

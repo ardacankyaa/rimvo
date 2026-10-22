@@ -127,6 +127,18 @@ function inspectFlac(view: DataView): AudioFileDescriptor {
   return { format: 'flac', sampleRate, channels, durationSeconds: totalSamples / sampleRate };
 }
 
+/** End of a leading ID3v2 tag, or 0 when the prefix has none or its length is malformed. */
+function id3v2End(view: DataView): number {
+  if (!text(view, 0, 'ID3') || view.byteLength < 10) return 0;
+  let size = 0;
+  for (let index = 6; index < 10; index += 1) {
+    const value = view.getUint8(index);
+    if (value & 0x80) return 0;
+    size = size * 128 + value;
+  }
+  return 10 + size + ((view.getUint8(5) & 0x10) !== 0 ? 10 : 0);
+}
+
 let nextMp3RequestId = 0;
 async function inspectMp3Blob(blob: Blob, maxDurationSeconds: number, signal?: AbortSignal): Promise<AudioFileDescriptor> {
   if (signal?.aborted) throw new AudioEngineError('aborted', 'The audio load was cancelled.', true, 'admission');
@@ -149,6 +161,7 @@ async function inspectMp3Blob(blob: Blob, maxDurationSeconds: number, signal?: A
     const abort = (): void => finish(() => reject(new AudioEngineError('aborted', 'The audio load was cancelled.', true, 'admission')));
     signal?.addEventListener('abort', abort, { once: true });
     worker.onerror = event => finish(() => reject(new AudioEngineError('internal', event.message || 'MP3 admission worker failed.', true, 'admission')));
+    worker.onmessageerror = () => finish(() => reject(new AudioEngineError('internal', 'The audio file could not be analysed.', true, 'admission')));
     worker.onmessage = (event: MessageEvent<{ readonly id: number; readonly scan?: { sampleRate: number; channels: 1 | 2; durationSeconds: number; frameCount: number }; readonly encodedBytes?: ArrayBuffer; readonly error?: string; readonly code?: AudioEngineErrorCode }>) => {
       const result = event.data;
       if (result.id !== id) return;
@@ -170,6 +183,14 @@ export async function inspectAudioBlob(blob: Blob, options: AudioAdmissionOption
   if (blob.size > options.maxEncodedBytes) fail('file-too-large', 'The encoded audio file exceeds the 128 MiB limit.');
   if (signal?.aborted) throw new AudioEngineError('aborted', 'The audio load was cancelled.', true, 'admission');
   const prefix = new DataView(await blob.slice(0, Math.min(12, blob.size)).arrayBuffer());
+  if (signal?.aborted) throw new AudioEngineError('aborted', 'The audio load was cancelled.', true, 'admission');
+  const tagEnd = id3v2End(prefix);
+  if (tagEnd > 0 && tagEnd + 4 <= blob.size && text(new DataView(await blob.slice(tagEnd, tagEnd + 4).arrayBuffer()), 0, 'fLaC')) {
+    // FLAC behind an ID3v2 tag: parse and decode the stream without the tag.
+    const encodedBytes = await blob.slice(tagEnd).arrayBuffer();
+    if (signal?.aborted) throw new AudioEngineError('aborted', 'The audio load was cancelled.', true, 'admission');
+    return validateDescriptor({ ...inspectFlac(new DataView(encodedBytes, 0, Math.min(HEADER_BYTES, encodedBytes.byteLength))), encodedBytes }, options);
+  }
   if (signal?.aborted) throw new AudioEngineError('aborted', 'The audio load was cancelled.', true, 'admission');
   const mp3 = text(prefix, 0, 'ID3') || (prefix.byteLength >= 2 && prefix.getUint8(0) === 0xff && (prefix.getUint8(1) & 0xe0) === 0xe0);
   if (mp3) return validateDescriptor(await inspectMp3Blob(blob, options.maxDurationSeconds, signal), options);

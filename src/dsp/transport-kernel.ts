@@ -63,7 +63,6 @@ interface DeckState {
   targetGain: number;
   transitionRemaining: number;
   pauseAfterFade: boolean;
-  cuePending: boolean;
   clearPending: boolean;
   seekActive: boolean;
   seekFromFrame: number;
@@ -111,7 +110,6 @@ function createDeckState(): DeckState {
     targetGain: 0,
     transitionRemaining: 0,
     pauseAfterFade: false,
-    cuePending: false,
     clearPending: false,
     seekActive: false,
     seekFromFrame: 0,
@@ -194,7 +192,6 @@ export class DualDeckTransportKernel {
     deck.targetGain = 0;
     deck.transitionRemaining = 0;
     deck.pauseAfterFade = false;
-    deck.cuePending = false;
     deck.clearPending = false;
     deck.seekActive = false;
     deck.seekFromHeld = false;
@@ -214,7 +211,6 @@ export class DualDeckTransportKernel {
       deck.playing = false;
       deck.pauseAfterFade = true;
       deck.clearPending = true;
-      deck.cuePending = false;
       deck.endPending = false;
       this.rampTo(deck, 0);
       return false;
@@ -222,10 +218,6 @@ export class DualDeckTransportKernel {
     this.clearDeckNow(deck);
     deck.clearAppliedFrame = this.contextFrame;
     return true;
-  }
-
-  isCuePending(id: TransportDeckId): boolean {
-    return this.decks[id].cuePending;
   }
 
   hasDeck(id: TransportDeckId): boolean {
@@ -256,7 +248,6 @@ export class DualDeckTransportKernel {
     if (deck.currentRate === 0) deck.currentRate = deck.nominalRate;
     deck.transportRunning = true;
     deck.pauseAfterFade = false;
-    deck.cuePending = false;
     deck.clearPending = false;
     deck.endPending = false;
     this.rampTo(deck, 1);
@@ -279,40 +270,8 @@ export class DualDeckTransportKernel {
       return;
     }
     deck.pauseAfterFade = true;
-    deck.cuePending = false;
     deck.clearPending = false;
     this.rampTo(deck, 0);
-  }
-
-  cueDeck(id: TransportDeckId): void {
-    this.assertActive();
-    const deck = this.decks[id];
-    if (!deck.channels) return;
-    deck.seekActive = false;
-    deck.seekFromHeld = false;
-    deck.scratchActive = false;
-    deck.scratchTargetRate = 0;
-    deck.scratchRampRemaining = 0;
-    deck.loopActive = false;
-    deck.loopStartFrame = 0;
-    deck.loopEndFrame = 0;
-    deck.playing = false;
-    if (deck.transportRunning && deck.outputGain > 0) {
-      deck.pauseAfterFade = true;
-      deck.cuePending = true;
-      deck.clearPending = false;
-      deck.endPending = false;
-      this.rampTo(deck, 0);
-      return;
-    }
-    deck.positionFrame = 0;
-    deck.transportRunning = false;
-    deck.pauseAfterFade = false;
-    deck.cuePending = false;
-    deck.clearPending = false;
-    deck.outputGain = 0;
-    deck.targetGain = 0;
-    deck.transitionRemaining = 0;
   }
 
   seekDeck(id: TransportDeckId, frame: number): void {
@@ -447,7 +406,12 @@ export class DualDeckTransportKernel {
     const maxBeatIndex = Math.floor((deck.frameCount - 1 - deck.beatGridFirstFrame) / period - phase);
     if (minBeatIndex > maxBeatIndex) throw new RangeError('No same-phase beat position fits within the slave track.');
     const boundedBeatIndex = Math.max(minBeatIndex, Math.min(maxBeatIndex, nearestBeatIndex));
-    const boundedTarget = deck.beatGridFirstFrame + (boundedBeatIndex + phase) * period;
+    let boundedTarget = deck.beatGridFirstFrame + (boundedBeatIndex + phase) * period;
+    if (deck.loopActive && (boundedTarget < deck.loopStartFrame || boundedTarget >= deck.loopEndFrame)) {
+      // Wrap into the active loop like playback does, so seekDeck never snaps to loopStart behind our back.
+      const loopLength = deck.loopEndFrame - deck.loopStartFrame;
+      boundedTarget = deck.loopStartFrame + ((boundedTarget - deck.loopStartFrame) % loopLength + loopLength) % loopLength;
+    }
     this.seekDeck(id, boundedTarget);
     deck.positionFrame = boundedTarget;
     }
@@ -540,7 +504,6 @@ export class DualDeckTransportKernel {
     if (resume) {
       deck.transportRunning = true;
       deck.pauseAfterFade = false;
-      deck.cuePending = false;
       deck.clearPending = false;
       this.rampTo(deck, 1);
     } else if (deck.transportRunning && deck.outputGain > 0) {
@@ -737,10 +700,6 @@ export class DualDeckTransportKernel {
 
   private finishTransition(deck: DeckState, appliedContextFrame: number): void {
     if (deck.pauseAfterFade && deck.transitionRemaining === 0 && deck.outputGain === 0 && deck.rateRampRemaining === 0) {
-      if (deck.cuePending) {
-        deck.positionFrame = 0;
-        deck.cuePending = false;
-      }
       if (deck.endPending) {
         deck.positionFrame = deck.frameCount;
         deck.endPending = false;
@@ -789,7 +748,7 @@ export class DualDeckTransportKernel {
 
   private advance(deck: DeckState): void {
     if (this.disposed || !deck.transportRunning || !deck.channels || deck.endPending) return;
-    if (deck.pauseAfterFade && !deck.cuePending && !deck.clearPending) return;
+    if (deck.pauseAfterFade && !deck.clearPending) return;
 
     const rate = this.actualRate(deck);
     if (rate === 0) return;
@@ -863,7 +822,6 @@ export class DualDeckTransportKernel {
     deck.targetGain = 0;
     deck.transitionRemaining = 0;
     deck.pauseAfterFade = false;
-    deck.cuePending = false;
     deck.clearPending = false;
     deck.seekActive = false;
     deck.seekFromHeld = false;

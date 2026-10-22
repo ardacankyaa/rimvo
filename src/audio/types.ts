@@ -326,16 +326,9 @@ export interface AudioEngine {
   setMasterVolume(value: number): void;
   getSnapshot(): AudioSnapshot;
   readPosition(id: DeckId): PositionSnapshot;
-  getWaveform(id: DeckId): WaveformData | null;
   subscribe(listener: () => void, id?: DeckId): () => void;
   suspend(): Promise<void>;
   resume(): Promise<void>;
   getDiagnostics(): ResourceDiagnostics;
   dispose(): Promise<void>;
 }
-
-export interface CreateAudioGraphOptions {
-  readonly transportWorkletUrl: string;
-  readonly limiterWorkletUrl: string;
-}
-

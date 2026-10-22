@@ -18,7 +18,7 @@ This release distributes the finished audio and artwork. The original synthesis 
 The project authors dedicated these exact compositions, recordings and artwork to CC0 1.0 Universal in [LICENSE.txt](LICENSE.txt). Including the actual assets in this repository is permitted by that dedication; they can be copied, modified, redistributed and performed, including commercially. Attribution is appreciated but not required by CC0. The per-track attribution strings remain in manifest.json for portfolio credits.
 
 License URL: https://creativecommons.org/publicdomain/zero/1.0/
-Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode.en
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
 Music and artwork do not inherit the source code MIT license.
 
 ## Local operation

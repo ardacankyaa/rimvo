@@ -2,7 +2,7 @@
   "id": "./",
   "name": "RIMVO",
   "short_name": "RIMVO",
-  "description": "Your two-deck DJ console.",
+  "description": "A local two-deck DJ console with scratch, loops and effects. Your files and mix recordings stay on your device.",
   "lang": "en",
   "start_url": "./",
   "scope": "./",

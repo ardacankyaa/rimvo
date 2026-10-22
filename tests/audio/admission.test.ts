@@ -143,4 +143,62 @@ describe('local audio admission', () => {
     await expect(inspectAudioBlob(await fixture('m1-tone-440-stereo-48000-pcm16.wav'), { ...options, maxDecodedPcmBytes: 1024 }))
       .rejects.toMatchObject({ code: 'file-too-large' });
   });
+
+  describe('MP3 trailing tags, truncated frames and ID3-wrapped FLAC', () => {
+    const ascii = (value: string): Uint8Array => new TextEncoder().encode(value);
+    const concat = (...parts: Uint8Array[]): Blob => new Blob(parts.map(part => toArrayBuffer(part)));
+    const mp3 = async (): Promise<Uint8Array> => new Uint8Array(await (await fixture('m1-tone-440-mono-44100-cbr.mp3')).arrayBuffer());
+    const id3v1 = (): Uint8Array => { const tag = new Uint8Array(128); tag.set(ascii('TAG')); return tag; };
+    function apeTag(withHeader: boolean): Uint8Array {
+      const items = new Uint8Array(24).fill(0x41), block = (header: boolean): Uint8Array => {
+        const bytes = new Uint8Array(32), view = new DataView(bytes.buffer);
+        bytes.set(ascii('APETAGEX'));
+        view.setUint32(8, 2000, true);
+        view.setUint32(12, items.length + 32, true);
+        view.setUint32(16, 1, true);
+        view.setUint32(20, (withHeader ? 0x80000000 : 0) | (header ? 0x20000000 : 0), true);
+        return bytes;
+      };
+      const parts = [...(withHeader ? [block(true)] : []), items, block(false)];
+      const out = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+      let offset = 0;
+      for (const part of parts) { out.set(part, offset); offset += part.length; }
+      return out;
+    }
+    const lyrics3v1 = (): Uint8Array => ascii('LYRICSBEGINSome words hereLYRICSEND');
+    const lyrics3v2 = (): Uint8Array => { const body = 'LYRICSBEGININD0000210'; return ascii(body + String(body.length).padStart(6, '0') + 'LYRICS200'); };
+
+    it('accepts ID3v1, APEv2 (with and without header) and Lyrics3 v1/v2 trailing tags', async () => {
+      const audio = await mp3();
+      const plain = await inspectAudioBlob(concat(audio), options);
+      for (const tail of [[id3v1()], [apeTag(false)], [apeTag(true)], [lyrics3v1()], [lyrics3v2()], [apeTag(true), id3v1()], [lyrics3v2(), apeTag(false), id3v1()]]) {
+        const result = await inspectAudioBlob(concat(audio, ...tail), options);
+        expect(result).toMatchObject({ format: 'mp3', sampleRate: 44_100 });
+        expect(result.durationSeconds).toBe(plain.durationSeconds);
+      }
+    });
+
+    it('ignores a truncated final frame but still rejects meaningful non-tag garbage', async () => {
+      const audio = await mp3();
+      const full = await inspectAudioBlob(concat(audio), options);
+      const cut = await inspectAudioBlob(concat(audio.subarray(0, audio.length - 100)), options);
+      expect(cut.durationSeconds).toBeLessThan(full.durationSeconds!);
+      expect(cut.durationSeconds).toBeGreaterThan(full.durationSeconds! - 0.1);
+      expect((await inspectAudioBlob(concat(audio.subarray(0, audio.length - 100), id3v1()), options)).durationSeconds).toBe(cut.durationSeconds);
+      const garbage = new Uint8Array(4096);
+      for (let index = 0; index < garbage.length; index += 1) garbage[index] = (index * 73 + 41) & 0x7f;
+      await expect(inspectAudioBlob(concat(audio, garbage), options)).rejects.toMatchObject({ code: 'corrupt-file' });
+      await expect(inspectAudioBlob(concat(audio, garbage, id3v1()), options)).rejects.toMatchObject({ code: 'corrupt-file' });
+    });
+
+    it('routes FLAC behind an ID3v2 tag to the FLAC parser without the tag', async () => {
+      const flac = new Uint8Array(await (await fixture('m1-tone-440-mono-44100.flac')).arrayBuffer());
+      const id3 = new Uint8Array(10 + 300);
+      id3.set([0x49, 0x44, 0x33, 4, 0, 0, 0, 0, 2, 0x2c]);
+      const result = await inspectAudioBlob(concat(id3, flac), options);
+      expect(result).toMatchObject({ format: 'flac', channels: 1, sampleRate: 44_100 });
+      expect(result.durationSeconds).toBe((await inspectAudioBlob(concat(flac), options)).durationSeconds);
+      expect(new Uint8Array(result.encodedBytes!)).toEqual(flac);
+    });
+  });
 });

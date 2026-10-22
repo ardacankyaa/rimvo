@@ -9,6 +9,8 @@ export interface DeckAudioStrip {
     readonly id: DeckId;
     readonly input: GainNode;
     readonly output: GainNode;
+    /** Post-EQ/filter/FX, before the channel fader; feeds the headphone cue only. */
+    readonly preFader: GainNode;
     readonly nodeCount: number;
     setGainDb(value: number): void;
     setEqDb(band: EqBand, value: number): void;
@@ -100,7 +102,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
         const input = gain(), dcSafety = biquad(), trim = gain();
         const low = biquad(), mid = biquad(), high = biquad();
         const dry = gain(), lowPass = biquad(), highPass = biquad();
-        const lowPassMix = gain(), highPassMix = gain(), wetSum = gain(), volume = gain(), output = gain();
+        const lowPassMix = gain(), highPassMix = gain(), wetSum = gain(), preFader = gain(), volume = gain(), output = gain();
         dcSafety.type = 'highpass';
         dcSafety.frequency.value = 20;
         dcSafety.Q.value = .707;
@@ -122,6 +124,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
         highPassMix.gain.value = 0;
         trim.gain.value = dbToGain(-3);
         volume.gain.value = 1;
+        preFader.gain.value = 1;
         input.connect(dcSafety);
         dcSafety.connect(trim);
         trim.connect(low);
@@ -135,7 +138,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
         highPass.connect(highPassMix);
         lowPassMix.connect(wetSum);
         highPassMix.connect(wetSum);
-
+        preFader.connect(volume);
         volume.connect(output);
         impulse = createRoomImpulse(context, id);
         let bpm = 120;
@@ -189,7 +192,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
                 reverb.connect(reverbWet);
                 reverbWet.connect(performance.input);
                 wetSum.connect(branchInput);
-                branchOutput.connect(volume);
+                branchOutput.connect(preFader);
                 return { input: branchInput, output: branchOutput, delaySend, delay, feedback, delayWet, reverbSend, reverb, reverbWet, performance, nodes: branchNodes };
             }
             catch (cause) {
@@ -202,7 +205,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
                 }
                 if (branchOutput) {
                     try {
-                        branchOutput.disconnect(volume);
+                        branchOutput.disconnect(preFader);
                     }
                     catch { /* Connection may not have been established. */ }
                 }
@@ -223,7 +226,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
             }
             catch { /* Context may already be closed. */ }
             try {
-                branch.output.disconnect(volume);
+                branch.output.disconnect(preFader);
             }
             catch { /* Context may already be closed. */ }
             try {
@@ -240,7 +243,7 @@ export function createDeckGraph(context: BaseAudioContext, id: DeckId): DeckAudi
         }
         let branch = createBranch();
         return {
-            id, input, output,
+            id, input, output, preFader,
             get nodeCount() { return disposed ? 0 : nodes.size; },
             setGainDb(value): void { ensureActive(); smooth(trim.gain, dbToGain(clampFinite(value, -24, 12, 'Deck gain')), context); },
             setEqDb(band, value): void { ensureActive(); const db = clampFinite(value, -24, 6, 'EQ gain'); smooth((band === 'low' ? low : band === 'mid' ? mid : high).gain, db, context); },
