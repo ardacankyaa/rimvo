@@ -42,6 +42,7 @@ test('a 1024×768 desktop shows the whole console without page scrolling', async
   test.skip(test.info().project.name === 'mobile-chromium', 'Phone layouts scroll by design.');
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto('/');
+  await requireAudio(page);
   await page.getByRole('button', { name: 'Try a mix', exact: true }).click();
   await expect(page.locator('.waveform-bank--welcome')).toHaveCount(0);
   const overflow = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
