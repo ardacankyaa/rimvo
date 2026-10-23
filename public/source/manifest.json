@@ -2,8 +2,8 @@
   "format": 1,
   "applicationSource": {
     "repository": "https://github.com/ardacankyaa/rimvo",
-    "commit": "7e5684b17f1cdfa1ebaa02169b55bdd38b892f96",
-    "runtimeSha256": "750dbc8d1dcf72c0d4c62b600831d7be807c8590f4f0d0c65377e80e54fa391e",
+    "commit": "65ed1f10d5322bbc56766b98702905b3fb9337ec",
+    "runtimeSha256": "7861d4689a0d66322a69e17e3f857ba64df4c039fd001dd1620141745228e3de",
     "runtimeDigestFormat": "SHA-256 of sorted src/** regular files, index.html, vite.config.ts and package-lock.json; each relative POSIX path + NUL + UTF-8 content with CRLF normalized to LF + NUL"
   },
   "components": [
