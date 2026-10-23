@@ -47,3 +47,15 @@ it('keeps the compiled demo catalog consistent with the published asset provenan
  const runtimeCatalog=JSON.parse(readFileSync(new URL('../../src/library/demo-catalog.json',import.meta.url),'utf8'));
  expect(runtimeCatalog).toEqual(publicManifest);
 });
+
+it('links the library to readable plain-text credits that carry every attribution', () => {
+ const root=new URL('../../public/demo-tracks/',import.meta.url);
+ const panel=readFileSync(new URL('../../src/features/dj-console/LibraryPanel.tsx',import.meta.url),'utf8');
+ const linked=panel.match(/BASE_URL \+ '(demo-tracks\/[^']+)'/)?.[1];
+ expect(linked).toBe('demo-tracks/CREDITS.txt');
+ const credits=readFileSync(new URL('CREDITS.txt',root),'utf8');
+ const manifest=JSON.parse(readFileSync(new URL('manifest.json',root),'utf8')) as Array<Record<string,string>>;
+ for(const track of manifest){for(const field of ['title','artist','attribution','licenseUrl'])expect(credits,field).toContain(track[field]);}
+ expect(credits).toContain('CC0 1.0 Universal');
+ expect(credits).toContain('https://creativecommons.org/publicdomain/zero/1.0/legalcode');
+});

@@ -1,0 +1,21 @@
+RIMVO demo track credits
+
+After hours
+  Artist: RIMVO originals
+  118 BPM, 32.54 s
+  After hours — RIMVO originals. Original synthesized composition and artwork; CC0 1.0 Universal. Attribution appreciated, not required by CC0.
+
+Open circuit
+  Artist: RIMVO originals
+  124 BPM, 30.97 s
+  Open circuit — RIMVO originals. Original synthesized composition and artwork; CC0 1.0 Universal. Attribution appreciated, not required by CC0.
+
+Source
+  Original synthesized percussion, bass and pad composition; no external samples, recordings, voices, borrowed melodies or sound libraries. The cover artwork is original vector art.
+
+License
+  The project authors dedicated these compositions, recordings and artwork to the public domain under CC0 1.0 Universal (LICENSE.txt in this folder). You may copy, modify, distribute and perform them, even commercially, without asking permission. Attribution is appreciated but not required.
+  License: https://creativecommons.org/publicdomain/zero/1.0/
+  Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+The demo music and artwork do not inherit the MIT license of the RIMVO source code. File hashes and measurements are listed in manifest.json in this folder.

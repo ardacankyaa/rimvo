@@ -69,7 +69,7 @@ export function LibraryPanel({ tracks, query, loadingByDeck, loadedByDeck, occup
     <header className="library-panel__head">
       <div className="library-panel__title">
         <h2>{t("Library")}<span className="library-panel__count">{t(tracks.length)}</span>
-          <a className="library-panel__credits-compact" href={import.meta.env.BASE_URL + 'demo-tracks/README.md'} target="_blank" rel="noopener noreferrer">{t("CC0 credits")}</a>
+          <a className="library-panel__credits-compact" href={import.meta.env.BASE_URL + 'demo-tracks/CREDITS.txt'} target="_blank" rel="noopener noreferrer">{t("CC0 credits")}</a>
         </h2>
         <p className="visually-hidden">{t("Session only; drop MP3, WAV or FLAC files here")}</p>
       </div>

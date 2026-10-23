@@ -9,7 +9,7 @@ Two bundled original synthesized tracks let a fresh clone be tried without a mus
 
 ## Provenance
 
-The bundled compositions and vector covers are documented as project-authored assets. The music uses mathematical oscillator/noise synthesis for percussion, bass and pads, without recordings, voices, borrowed melodies, sound libraries or external samples. No streaming service supplied these files. Each manifest entry links to this local provenance document.
+The bundled compositions and vector covers are documented as project-authored assets. The music uses mathematical oscillator/noise synthesis for percussion, bass and pads, without recordings, voices, borrowed melodies, sound libraries or external samples. No streaming service supplied these files. Each manifest entry links to this local provenance document. The console's **CC0 credits** link opens the plain-text summary in [CREDITS.txt](CREDITS.txt).
 
 This release distributes the finished audio and artwork. The original synthesis generator is not included, so this repository does not provide a command to regenerate these exact assets. Their SHA-256 values, exact duration, encoded size, first beat and finite/peak/RMS measurements are in [manifest.json](manifest.json). Both tracks are stereo 48 kHz PCM16 WAV, together 12,194,032 bytes (~11.63 MiB). Artwork is original SVG.
 
