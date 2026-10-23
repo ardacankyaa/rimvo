@@ -30,8 +30,42 @@ export function serviceWorker(publicDir = 'public'): Plugin {
   };
 }
 
+// Everything the console runs, including its workers and audio worklets, comes
+// from its own origin. Artwork and recording previews use local blob: URLs.
+export const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "worker-src 'self'",
+  "connect-src 'self'",
+  "img-src 'self' blob:",
+  "media-src 'self' blob:",
+  "style-src 'self'",
+  "font-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
+/** Adds the policy to the built index.html. Vite's dev server needs inline scripts for HMR, so it runs without one. */
+export function contentSecurityPolicyMeta(policy = contentSecurityPolicy): Plugin {
+  return {
+    name: 'rimvo-content-security-policy',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        // Directly after the charset declaration, before any script or stylesheet.
+        const charset = /<meta charset="[^"]*"\s*\/?>/i;
+        if (!charset.test(html) || policy.includes('"')) throw new Error('Cannot add the Content-Security-Policy to index.html.');
+        return html.replace(charset, match => `${match}\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`);
+      },
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), serviceWorker()],
+  plugins: [react(), serviceWorker(), contentSecurityPolicyMeta()],
   base: './',
   worker: { format: 'es' },
   optimizeDeps: {
