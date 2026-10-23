@@ -80,12 +80,21 @@ BPM and key are estimates; adjust them manually when needed. Browser storage can
 | `npm run build` | Typechecks and compiles production assets into `dist/` |
 | `npm run preview` | Serves the production build locally at port 5174 |
 | `npm test` | Runs the test suite with Vitest |
-| `npm run test:e2e` | Runs real-browser workflows in Chromium, WebKit and mobile Chromium |
+| `npm run test:e2e` | Runs real-browser workflows in Chromium, WebKit and mobile Chromium, and the offline check of the production build. Run `npx playwright install chromium webkit` once first |
 | `npm run lint` | Lints source files with ESLint |
 | `npm run typecheck`| Validates TypeScript types across the codebase |
 | `npm run check:licenses` | Verifies author notices, dependency sources and license-file integrity; add `-- --dist` after building |
 
-The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), the distributed license and source checks, unit/DSP tests and browser workflows on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes. Before running browser tests locally, install their runtimes with `npx playwright install chromium webkit` (Linux CI also uses `--with-deps`). Browser tests use isolated disposable contexts and the bundled test audio fixtures.
+The [CI workflow](.github/workflows/ci.yml) installs dependencies from the lockfile, then runs lint, the production build (including TypeScript checks), the distributed license and source checks, unit/DSP tests and browser workflows on pushes to `main` and pull requests. Successful `main` runs automatically publish the site to https://ardacankyaa.github.io/rimvo/. Pull requests only run checks. The audio tests include a long transport simulation and can take several minutes. Browser tests use isolated disposable contexts and the bundled test audio fixtures.
+
+Install the browser runtimes before the first browser test run (and after Playwright updates), then run the suite:
+
+```bash
+npx playwright install chromium webkit
+npm run test:e2e
+```
+
+For a quick local check, run `npm run test:e2e -- --project=chromium`. The `production-offline` project builds the hosted `--base=/rimvo/` variant into `dist-e2e/`, serves it with `vite preview`, verifies that it runs under its Content-Security-Policy, waits for the service worker to activate and reloads the console offline; run it alone with `npm run test:e2e -- --project=production-offline`. CI runs the browser suite in the official Playwright container image, which already contains the browsers.
 
 The hosted build uses `npm run build -- --base=/rimvo/` so assets, demos, and audio workers resolve under the public site's path. `npm run build` remains available for other static hosts or local previews. The public site stays available when your own computer is off.
 
@@ -123,7 +132,7 @@ The Playwright WebKit runtime on Windows does not expose Web Audio. Audio workfl
 
 ## Privacy & Security
 
-RIMVO processes your audio on your device and does not upload personal music or recordings. Explicit session saves use IndexedDB (`rimvo-sessions`), with each file stored as its own record so saving and restoring hold one file in memory at a time; delete the save from the Session menu or clear site data. Language uses localStorage (`rimvo-language`); production builds cache application files and opened demo tracks in Cache Storage (`rimvo-app-*`, `rimvo-runtime-*`) so the console opens offline after the first visit; optional theme storage is controlled in the Cookies panel. Application files and bundled demos are served from the application's own origin. The application includes no tracking or telemetry and never requests microphone access. Separate headphone output may request speaker-selection permission.
+RIMVO processes your audio on your device and does not upload personal music or recordings. Explicit session saves use IndexedDB (`rimvo-sessions`), with each file stored as its own record so saving and restoring hold one file in memory at a time; delete the save from the Session menu or clear site data. Language uses localStorage (`rimvo-language`); production builds cache application files and opened demo tracks in Cache Storage (`rimvo-app-*`, `rimvo-runtime-*`) so the console opens offline after the first visit; optional theme storage is controlled in the Cookies panel. Application files and bundled demos are served from the application's own origin, and production builds carry a Content-Security-Policy that only lets the page load scripts, workers, styles and data from that origin (plus local `blob:` artwork and recording previews). The application includes no tracking or telemetry and never requests microphone access. Separate headphone output may request speaker-selection permission.
 
 Please report security problems privately as described in [SECURITY.md](SECURITY.md).
 

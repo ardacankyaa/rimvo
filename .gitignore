@@ -26,3 +26,6 @@ coverage/
 # Browser test artifacts
 test-results/
 playwright-report/
+
+# Production build used by the offline browser test
+dist-e2e/

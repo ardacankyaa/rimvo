@@ -19,9 +19,10 @@ npm run dev
 
 ## Before opening a pull request
 
-Run the same checks as CI:
+Run the same checks as CI. The browser tests need their runtimes, so install them first (once per Playwright version):
 
 ```bash
+npx playwright install chromium webkit
 npm run lint
 npm run build -- --base=/rimvo/
 npm run check:licenses -- --dist
@@ -29,7 +30,7 @@ npm test
 npm run test:e2e
 ```
 
-Install browser runtimes once with `npx playwright install chromium webkit`. On Windows, WebKit has no Web Audio, so its audio workflows are skipped locally; CI runs them on Linux.
+`npm run test:e2e` runs the workflows in Chromium, WebKit and mobile Chromium against the dev server, plus the `production-offline` project: it builds the hosted `--base=/rimvo/` variant into `dist-e2e/`, serves it with `vite preview`, checks that it runs under its Content-Security-Policy, waits for the service worker and reloads the console offline. For a quicker local run, use `npm run test:e2e -- --project=chromium`, or `npm run test:e2e -- --project=production-offline` after changing `src/pwa/`, `index.html` or `vite.config.ts`. On Windows, WebKit has no Web Audio, so its audio workflows are skipped locally; CI runs them on Linux.
 
 Guidelines:
 
