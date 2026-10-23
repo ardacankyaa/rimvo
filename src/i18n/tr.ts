@@ -256,12 +256,13 @@ export const turkish: Record<string, string> = {
   'Removed track from the library.': 'Parça kütüphaneden kaldırıldı.', 'The audio file could not be analysed.': 'Ses dosyası analiz edilemedi.', 'The saved audio is missing or invalid.': 'Kayıtlı ses eksik veya geçersiz.',
   'Something went wrong': 'Bir sorun oluştu', 'Technical details': 'Teknik ayrıntılar',
   'RIMVO hit an unexpected problem and stopped the audio. Reload to continue. A session you saved is still on this device; changes after that save are lost.': 'RIMVO beklenmeyen bir sorunla karşılaştı ve sesi durdurdu. Devam etmek için sayfayı yenile. Kaydettiğin oturum bu cihazda duruyor; o kayıttan sonraki değişiklikler kayboldu.',
+  'Cookies and preferences': 'Çerezler ve tercihler', 'Terms of use': 'Kullanım koşulları',
+  'Theme preference': 'Tema tercihi', 'Remember my theme on this device': 'Tema tercihimi bu cihazda hatırla', 'Optional · 180 days · You can turn this off at any time.': 'İsteğe bağlı · 180 gün · İstediğin zaman kapatabilirsin.',
+  'The browser did not allow this preference to be stored. You can continue using RIMVO.': 'Tarayıcı bu tercihin saklanmasına izin vermedi. RIMVO’yu kullanmaya devam edebilirsin.',
+  'Third-party licenses (new tab)': 'Üçüncü taraf lisansları (yeni sekme)', 'Demo track license (new tab)': 'Örnek parça lisansı (yeni sekme)',
 };
 
+/** English display text for English source keys that read better shortened. */
 export const english: Record<string, string> = {
   'Reverb space': 'Space',
-  'Gizlilik': 'Privacy', 'Çerezler ve tercihler': 'Cookies and preferences', 'Kullanım koşulları': 'Terms of use', 'Kapat': 'Close',
-  'Tema tercihi': 'Theme preference', 'Tema tercihimi bu cihazda hatırla': 'Remember my theme on this device', 'İsteğe bağlı · 180 gün · İstediğin zaman kapatabilirsin.': 'Optional · 180 days · You can turn this off at any time.',
-  'Tarayıcı bu tercihin saklanmasına izin vermedi. RIMVO’yu kullanmaya devam edebilirsin.': 'The browser did not allow this preference to be stored. You can continue using RIMVO.',
-  'Üçüncü taraf lisansları (yeni sekme)': 'Third-party licenses (new tab)', 'Örnek parça lisansı (yeni sekme)': 'Demo track license (new tab)',
 };

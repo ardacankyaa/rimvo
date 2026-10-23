@@ -26,7 +26,7 @@ export function LegalPanel({ page, onClose }: LegalPanelProps) {
     } }}>
     <header className="legal-dialog__header">
       <div><span className="brand-caption"><BrandMark />{t("RIMVO")}</span><h2 id="legal-title">{t(legalTitles[page])}</h2></div>
-      <button type="button" aria-label={t("Kapat")} onClick={onClose} autoFocus>×</button>
+      <button type="button" aria-label={t("Close")} onClick={onClose} autoFocus>×</button>
     </header>
     <div className="legal-dialog__body" tabIndex={0} aria-label={t(legalTitles[page]) + (language === 'tr' ? ' metni' : ' text')}>
       <p className="legal-dialog__date">RIMVO · {policyVersion}</p>
@@ -38,18 +38,18 @@ export function LegalPanel({ page, onClose }: LegalPanelProps) {
         </p>}
       </section>)}
       {page === 'cookies' && <fieldset className="legal-dialog__preference">
-        <legend>{t("Tema tercihi")}</legend>
+        <legend>{t("Theme preference")}</legend>
         <label><input type="checkbox" checked={remember} onChange={event => {
           const requested = event.target.checked;
           const enabled = setRememberPreferences(requested, document.body.dataset.theme === 'light' ? 'light' : 'dark');
           setRemember(enabled); setStorageError(requested && !enabled);
-        }} />{t("Tema tercihimi bu cihazda hatırla")}</label>
-        <p>{t("İsteğe bağlı · 180 gün · İstediğin zaman kapatabilirsin.")}</p>
-        {storageError && <p role="status">{t("Tarayıcı bu tercihin saklanmasına izin vermedi. RIMVO’yu kullanmaya devam edebilirsin.")}</p>}
+        }} />{t("Remember my theme on this device")}</label>
+        <p>{t("Optional · 180 days · You can turn this off at any time.")}</p>
+        {storageError && <p role="status">{t("The browser did not allow this preference to be stored. You can continue using RIMVO.")}</p>}
       </fieldset>}
       {page === 'terms' && <p className="legal-dialog__licenses">
-        <a href={import.meta.env.BASE_URL + 'THIRD_PARTY_LICENSES.txt'} target="_blank" rel="noopener noreferrer">{t("Üçüncü taraf lisansları (yeni sekme)")}</a>
-        <a href={import.meta.env.BASE_URL + 'demo-tracks/LICENSE.txt'} target="_blank" rel="noopener noreferrer">{t("Örnek parça lisansı (yeni sekme)")}</a>
+        <a href={import.meta.env.BASE_URL + 'THIRD_PARTY_LICENSES.txt'} target="_blank" rel="noopener noreferrer">{t("Third-party licenses (new tab)")}</a>
+        <a href={import.meta.env.BASE_URL + 'demo-tracks/LICENSE.txt'} target="_blank" rel="noopener noreferrer">{t("Demo track license (new tab)")}</a>
       </p>}
     </div>
   </dialog>;

@@ -1,6 +1,6 @@
 export type LegalPage = 'privacy' | 'cookies' | 'terms';
 export const legalTitles: Record<LegalPage, string> = {
-  privacy: 'Gizlilik', cookies: 'Çerezler ve tercihler', terms: 'Kullanım koşulları',
+  privacy: 'Privacy', cookies: 'Cookies and preferences', terms: 'Terms of use',
 };
 export interface PolicySection { readonly heading: string; readonly paragraphs: readonly string[] }
 export const policyVersion = '2026-10-23';

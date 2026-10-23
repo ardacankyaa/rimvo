@@ -38,7 +38,6 @@ function collectMessages(): Map<string, string> {
     for (const pattern of userMessage) {
       for (const match of source.matchAll(pattern)) {
         const text = match[1].trim();
-        // Policy copy is authored in Turkish and translated to English instead.
         if (/[A-Za-z]{2}/.test(text) && !verbatim.has(text) && !internal.has(text) && !Object.hasOwn(english, text)) messages.set(text, relative(root, file));
       }
     }
@@ -49,6 +48,12 @@ function collectMessages(): Map<string, string> {
 describe('Turkish translation coverage', () => {
   it('finds the user-facing messages it guards', () => {
     expect(collectMessages().size).toBeGreaterThan(200);
+  });
+
+  it('uses English source text as the translation key', () => {
+    const turkishKeys = [...collectMessages()].filter(([text]) => /[çğıöşüÇĞİÖŞÜ]/.test(text)).map(([text, file]) => `${file}: ${text}`);
+    expect(turkishKeys).toEqual([]);
+    expect(Object.keys(english).filter(text => /[çğıöşüÇĞİÖŞÜ]/.test(text))).toEqual([]);
   });
 
   it('translates every literal user-facing message in the source', () => {
