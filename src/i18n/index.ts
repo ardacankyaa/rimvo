@@ -48,6 +48,12 @@ export function t<T>(value: T): T {
   if (estimate) return `Bu vuruş tahminini kullan (%${estimate[1]} güven)` as T;
   const adding = text.match(/^Adding (\d+) local tracks?( to Deck ([AB]))?…$/);
   if (adding) return (adding[3] ? `${adding[1]} yerel parça ${adding[3]} kanalına ekleniyor…` : `${adding[1]} yerel parça ekleniyor…`) as T;
+  const skipped = text.match(/^(\d+) files? skipped\. (.+)$/s);
+  if (skipped) {
+    // Only the reason labels are translated; the quoted file names stay verbatim.
+    const rest = skipped[2].replace(/(^|”\. )(Not MP3, WAV or FLAC|Empty or larger than 128 MiB|Session limit of 200 tracks reached): /g, (_match, lead: string, label: string) => `${lead}${turkish[label]}: `);
+    return `${skipped[1]} dosya atlandı. ${rest}` as T;
+  }
   const unloaded = text.match(/^Unloaded Deck ([AB])\.$/); if (unloaded) return `${unloaded[1]} kanalı boşaltıldı.` as T;
   const removed = text.match(/^Removed (.+) from the library\. Loaded audio keeps playing\.$/s);
   if (removed) return `${removed[1]} kütüphaneden kaldırıldı. Yüklü ses çalmaya devam ediyor.` as T;

@@ -136,24 +136,50 @@ export async function retryLibraryAnalysis(id:string):Promise<void>{
     if(!snapshot.some(track=>track.id===id&&track.file)||analysisJob?.id===id||analysisQueue.includes(id))return;
     setAnalysis(id,{bpmStatus:'queued'});analysisQueue.push(id);analyzeNext();
 }
-async function addBatch(files: readonly File[], generation: number, analyze:boolean): Promise<void> {
+/** Why a file was left out of an otherwise successful addition. */
+export type SkipReason = 'format' | 'size' | 'full';
+export interface SkippedFile { readonly name: string; readonly reason: SkipReason }
+export interface LibraryAddResult { readonly added: number; readonly skipped: readonly SkippedFile[] }
+const skipReasons: Record<SkipReason, { readonly label: string; readonly message: string }> = {
+    format: { label: 'Not MP3, WAV or FLAC', message: 'Choose local MP3, WAV or FLAC tracks.' },
+    size: { label: 'Empty or larger than 128 MiB', message: 'Choose a non-empty track below 128 MiB.' },
+    full: { label: 'Session limit of 200 tracks reached', message: 'This session holds up to 200 tracks.' },
+};
+/** The complete message for one skipped file, used when that file was the only one chosen. */
+export const skippedFileMessage = (file: SkippedFile): string => skipReasons[file.reason].message;
+/** One notice for all skipped files, grouped by reason. File names are shown verbatim. */
+export function describeSkippedFiles(skipped: readonly SkippedFile[]): string {
+    const groups = (Object.keys(skipReasons) as SkipReason[]).map(reason => [reason, skipped.filter(file => file.reason === reason)] as const).filter(([, files]) => files.length);
+    return [skipped.length + (skipped.length === 1 ? ' file skipped.' : ' files skipped.'), ...groups.map(([reason, files]) => skipReasons[reason].label + ': ' + files.map(file => '“' + file.name + '”').join(', ') + '.')].join(' ');
+}
+const empty: LibraryAddResult = Object.freeze({ added: 0, skipped: Object.freeze([]) });
+async function addBatch(files: readonly File[], generation: number, analyze:boolean): Promise<LibraryAddResult> {
     if (generation !== epoch)
-        return;
+        return empty;
     if (files.length > 32)
         throw new Error('Add up to 32 tracks at a time.');
+    // Each file is checked on its own, so one unsupported file never drops the rest.
+    const skipped: SkippedFile[] = [];
+    let added = 0;
     for (const file of files) {
-        if (!/\.(mp3|wav|flac)$/i.test(file.name) && !['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/flac', 'audio/x-flac'].includes(file.type))
-            throw new Error('Choose local MP3, WAV or FLAC tracks.');
-        if (file.size === 0 || file.size > 128 * 1024 * 1024)
-            throw new Error('Choose a non-empty track below 128 MiB.');
+        if (!/\.(mp3|wav|flac)$/i.test(file.name) && !['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/flac', 'audio/x-flac'].includes(file.type)) {
+            skipped.push({ name: file.name, reason: 'format' });
+            continue;
+        }
+        if (file.size === 0 || file.size > 128 * 1024 * 1024) {
+            skipped.push({ name: file.name, reason: 'size' });
+            continue;
+        }
         if (await findMatchingFile(file, file.name, file.lastModified))
             continue;
-        if (snapshot.length >= 200)
-            throw new Error('This session holds up to 200 tracks.');
+        if (snapshot.length >= 200) {
+            skipped.push({ name: file.name, reason: 'full' });
+            continue;
+        }
         const id = 'local-' + ++sequence;
         const metadata = await readTrackMetadata(file);
         if (generation !== epoch)
-            return;
+            return { added, skipped };
         let artworkUrl: string | null = null;
         if (metadata.artwork) {
             artworkUrl = URL.createObjectURL(metadata.artwork);
@@ -161,9 +187,12 @@ async function addBatch(files: readonly File[], generation: number, analyze:bool
         }
         publish([...snapshot, Object.freeze({ id, title: metadata.title, artist: metadata.artist, file, source: 'local' as const, artworkUrl, durationSeconds: metadata.durationSeconds ?? null, bpm: metadata.bpm ?? null,bpmStatus:analyze?'queued' as const:undefined })]);
         if(analyze)analysisQueue.push(id);
+        added++;
     }
+    return { added, skipped };
 }
-export function addLocalFiles(files: readonly File[],options:{analyze?:boolean}={}): Promise<void> { const generation = epoch; const operation = addTail.then(() => addBatch(files, generation,options.analyze!==false)).finally(()=>{if(options.analyze!==false)analyzeNext();}); addTail = operation.then(() => undefined, () => undefined); return operation; }
+/** Adds every acceptable file and reports the ones it skipped. Only a batch above 32 files is rejected as a whole. */
+export function addLocalFiles(files: readonly File[],options:{analyze?:boolean}={}): Promise<LibraryAddResult> { const generation = epoch; const operation = addTail.then(() => addBatch(files, generation,options.analyze!==false)).finally(()=>{if(options.analyze!==false)analyzeNext();}); addTail = operation.then(() => undefined, () => undefined); return operation; }
 export function removeLibraryTrack(id: string): void {
     const queued=analysisQueue.indexOf(id);if(queued>=0)analysisQueue.splice(queued,1);
     if(analysisJob?.id===id)analysisJob.controller.abort();

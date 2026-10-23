@@ -13,7 +13,8 @@ type Api = {
         bpm: number | null;
         bpmStatus?:string;
     }[];
-    addLocalFiles(files: readonly File[]): Promise<void>;
+    addLocalFiles(files: readonly File[], options?: { analyze?: boolean }): Promise<{ added: number; skipped: readonly { name: string; reason: string }[] }>;
+    describeSkippedFiles(skipped: readonly { name: string; reason: 'format' | 'size' | 'full' }[]): string;
     findLibraryTrackForFile(file: Blob, name: string, lastModified: number): Promise<{ id: string } | undefined>;
     removeLibraryTrack(id: string): void;
     loadLibraryTrack(id: string, deck: 'A' | 'B'): Promise<void>;
@@ -38,7 +39,30 @@ describe('local-first session library', () => {
         for(let update=0;update<3;update++){let calls=0;for(const notify of listeners){if(++calls>2)throw new Error('Notification subscription loop');notify();}}
         expect(analysisMocks.subscribe).toHaveBeenCalledOnce();busy=false;for(const notify of listeners)notify();await vi.waitFor(()=>expect(a.getLibrarySnapshot()[0].bpm).toBe(126));expect(listeners.size).toBe(0);a.disposeLibrary();
     });
-    it('still analyzes accepted files if a later file in the batch is rejected',async()=>{const a=await api();a.disposeLibrary();await expect(a.addLocalFiles([new File(['RIFF'],'accepted.wav'),new File(['bad'],'wrong.txt')])).rejects.toThrow('Choose local MP3');await vi.waitFor(()=>expect(a.getLibrarySnapshot()[0].bpm).toBe(126));expect(a.getLibrarySnapshot()).toHaveLength(1);a.disposeLibrary();});
+    it('still analyzes accepted files if a later file in the batch is skipped',async()=>{const a=await api();a.disposeLibrary();await expect(a.addLocalFiles([new File(['RIFF'],'accepted.wav'),new File(['bad'],'wrong.txt')])).resolves.toEqual({added:1,skipped:[{name:'wrong.txt',reason:'format'}]});await vi.waitFor(()=>expect(a.getLibrarySnapshot()[0].bpm).toBe(126));expect(a.getLibrarySnapshot()).toHaveLength(1);a.disposeLibrary();});
+    it('adds the valid files that follow an unsupported or oversized one and reports what it skipped', async () => {
+        const a = await api(); a.disposeLibrary();
+        const oversized = new File(['RIFF'], 'huge.wav'); Object.defineProperty(oversized, 'size', { value: 129 * 1024 * 1024 });
+        const result = await a.addLocalFiles([new File(['x'], 'notes.txt'), new File([], 'empty.flac'), oversized, new File(['RIFF'], 'first.wav'), new File(['ID3'], 'second.mp3'), new File(['x'], 'cover.jpg')], { analyze: false });
+        expect(result.added).toBe(2);
+        expect(a.getLibrarySnapshot().map(track => track.file?.name)).toEqual(['first.wav', 'second.mp3']);
+        expect(result.skipped).toEqual([{ name: 'notes.txt', reason: 'format' }, { name: 'empty.flac', reason: 'size' }, { name: 'huge.wav', reason: 'size' }, { name: 'cover.jpg', reason: 'format' }]);
+        expect(a.describeSkippedFiles(result.skipped as never)).toBe('4 files skipped. Not MP3, WAV or FLAC: “notes.txt”, “cover.jpg”. Empty or larger than 128 MiB: “empty.flac”, “huge.wav”.');
+        a.disposeLibrary();
+    });
+    it('keeps the per-batch and per-session limits', async () => {
+        const a = await api(); a.disposeLibrary();
+        const files = (count: number, prefix: string) => Array.from({ length: count }, (_, index) => new File(['RIFF' + prefix + index], prefix + index + '.wav', { lastModified: index }));
+        await expect(a.addLocalFiles(files(33, 'many'))).rejects.toThrow('Add up to 32 tracks at a time.');
+        expect(a.getLibrarySnapshot()).toHaveLength(0);
+        for (let batch = 0; batch < 6; batch++) await a.addLocalFiles(files(32, 'batch' + batch + '-'), { analyze: false });
+        const result = await a.addLocalFiles(files(10, 'last'), { analyze: false });
+        expect(a.getLibrarySnapshot()).toHaveLength(200);
+        expect(result.added).toBe(8);
+        expect(result.skipped).toEqual([{ name: 'last8.wav', reason: 'full' }, { name: 'last9.wav', reason: 'full' }]);
+        expect(a.describeSkippedFiles(result.skipped as never)).toBe('2 files skipped. Session limit of 200 tracks reached: “last8.wav”, “last9.wav”.');
+        a.disposeLibrary();
+    });
     it('finds BPM after adding a file without installing either deck',async()=>{const a=await api();a.disposeLibrary();await a.addLocalFiles([new File(['RIFF'],'library-only.wav')]);await vi.waitFor(()=>expect(a.getLibrarySnapshot()[0].bpm).toBe(126));expect(a.getLibrarySnapshot()[0].bpmStatus).toBe('complete');expect(mocks.loadDeck).not.toHaveBeenCalled();a.disposeLibrary();});
     it('aborts a removed file analysis and never resurrects its entry',async()=>{const a=await api();a.disposeLibrary();let finish!:(value:Awaited<ReturnType<typeof analysisMocks.analyzeFile>>)=>void;analysisMocks.analyzeFile.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));await a.addLocalFiles([new File(['RIFF'],'removed.wav')]);await vi.waitFor(()=>expect(analysisMocks.analyzeFile).toHaveBeenCalledOnce());const signal=analysisMocks.analyzeFile.mock.calls[0][1]!;a.removeLibraryTrack(a.getLibrarySnapshot()[0].id);expect(signal.aborted).toBe(true);finish({durationSeconds:8,bpmAnalysis:{status:'complete',confidence:.65,candidates:[{bpm:126,confidence:.65,firstBeatSeconds:0}]}});await Promise.resolve();await Promise.resolve();expect(a.getLibrarySnapshot()).toHaveLength(0);a.disposeLibrary();});
     it('deduplicates local files, publishes cached snapshots, and removes session references', async () => { const a = await api(); a.disposeLibrary(); const notify = vi.fn(); const off = a.subscribeLibrary(notify); const file = new File(['RIFF'], 'session.wav', { lastModified: 1 }); await a.addLocalFiles([file, file]); expect(a.getLibrarySnapshot()).toHaveLength(1); expect(a.getLibrarySnapshot()).toBe(a.getLibrarySnapshot()); expect(notify).toHaveBeenCalled(); a.removeLibraryTrack(a.getLibrarySnapshot()[0].id); expect(a.getLibrarySnapshot()).toHaveLength(0); off(); a.disposeLibrary(); });

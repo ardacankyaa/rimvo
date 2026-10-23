@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import type { DeckId, HotCueIndex } from './audio/types';
 import { engine, getSnapshot, subscribe } from './state/engine';
 import { createUiSnapshotReader } from './state/ui-snapshot';
-import { addLocalFiles, ensureDemoTracks, findLibraryTrackForFile, getLibrarySnapshot, loadLibraryTrack, removeLibraryTrack, subscribeLibrary, updateLibraryTrack } from './library/library';
+import { addLocalFiles, describeSkippedFiles, ensureDemoTracks, findLibraryTrackForFile, getLibrarySnapshot, loadLibraryTrack, removeLibraryTrack, skippedFileMessage, subscribeLibrary, updateLibraryTrack } from './library/library';
 import { DeckPanel, DeckTools, type DeckToolTab } from './features/dj-console/DeckPanel';
 import { LibraryPanel } from './features/dj-console/LibraryPanel';
 import { Mixer, MixerTools } from './features/dj-console/Mixer';
@@ -307,15 +307,17 @@ export default function App() {
     setMessage('Adding ' + count + ' local track' + (count === 1 ? '' : 's') + '…');
     try {
       await engine.initializeFromGesture();
-      await addLocalFiles(files);
-      if (statusRequest === statusIntent.current) setMessage('Tracks added to Library.');
+      const result = await addLocalFiles(files);
+      if (statusRequest === statusIntent.current) setMessage(result.added || !result.skipped.length ? 'Tracks added to Library.' : 'No tracks were added.');
+      // Accepted files stay added; the notice names the ones that were left out.
+      if (result.skipped.length) reportError(files.length === 1 ? skippedFileMessage(result.skipped[0]) : describeSkippedFiles(result.skipped), 'library');
     } catch (cause) {
       if (!isObsoleteLoad(cause)) {
         if (statusRequest === statusIntent.current) setMessage('Local track import failed.');
         throw cause;
       }
     }
-  }, [clearError]);
+  }, [clearError, reportError]);
   const addFileAndLoad = useCallback(async (file: File, deckId: DeckId): Promise<void> => {
     const request = ++loadIntent.current[deckId];
     const statusRequest = ++statusIntent.current;
@@ -326,8 +328,9 @@ export default function App() {
     try {
       await engine.initializeFromGesture();
       if (request !== loadIntent.current[deckId]) return;
-      await addLocalFiles([file],{analyze:false});
+      const added = await addLocalFiles([file],{analyze:false});
       if (request !== loadIntent.current[deckId]) return;
+      if (added.skipped.length) throw new Error(skippedFileMessage(added.skipped[0]));
       const entry = getLibrarySnapshot().find(track => track.file === file) ?? await findLibraryTrackForFile(file, file.name, file.lastModified);
       if (request !== loadIntent.current[deckId]) return;
       if (!entry) throw new Error('The selected file could not be added to the local library.');

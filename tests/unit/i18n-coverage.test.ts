@@ -66,6 +66,8 @@ describe('Turkish translation coverage', () => {
     ['Removed track from the library.', 'Parça kütüphaneden kaldırıldı.'],
     ['Use 120.0 BPM grid A', 'A için 120.0 BPM ızgarasını kullan'],
     ['Use this beat estimate (82% confidence)', 'Bu vuruş tahminini kullan (%82 güven)'],
+    ['1 file skipped. Session limit of 200 tracks reached: “late.wav”.', '1 dosya atlandı. 200 parçalık oturum sınırına ulaşıldı: “late.wav”.'],
+    ['3 files skipped. Not MP3, WAV or FLAC: “a.txt”, “Not MP3, WAV or FLAC: b.txt”. Empty or larger than 128 MiB: “c.wav”.', '3 dosya atlandı. MP3, WAV veya FLAC değil: “a.txt”, “Not MP3, WAV or FLAC: b.txt”. Boş veya 128 MiB’tan büyük: “c.wav”.'],
   ])('translates the dynamic status %s', (source, expected) => {
     setLanguage('tr');
     expect(t(source)).toBe(expected);

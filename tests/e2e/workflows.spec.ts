@@ -125,6 +125,19 @@ test('corrupt audio produces an actionable error while the console remains usabl
   await expect(page.getByRole('button', { name: 'Try a mix', exact: true })).toBeEnabled();
 });
 
+test('an unsupported file in a batch is skipped while the other files are added', async ({ page }) => {
+  await page.goto('/');
+  await requireAudio(page);
+  const wav = await readFile(path.resolve('tests/fixtures/m1-tone-440-mono-44100-pcm16.wav'));
+  await page.getByLabel('Add local files', { exact: true }).setInputFiles([
+    { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('not audio') },
+    { name: 'tone.wav', mimeType: 'audio/wav', buffer: wav },
+  ]);
+  await expect(page.locator('.library-track-local')).toHaveCount(1);
+  await expect(page.getByRole('alert').first()).toContainText('1 file skipped. Not MP3, WAV or FLAC: “notes.txt”.');
+  await expect(page.getByRole('status').filter({ hasText: 'Tracks added to Library.' })).toBeVisible();
+});
+
 test('unsupported headphone routing explains the limitation without disabling the mixer', async ({ page }) => {
   await page.addInitScript(() => { Reflect.deleteProperty(HTMLMediaElement.prototype, 'setSinkId'); });
   await page.goto('/');
