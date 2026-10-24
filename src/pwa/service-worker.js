@@ -1,5 +1,6 @@
 // Offline support for production builds. vite.config.ts replaces the two
-// placeholders below with the build's file list and a version derived from it.
+// placeholders below with the build's file list and a version derived from the
+// content of those files.
 const PRECACHE = self.__RIMVO_PRECACHE__;
 const VERSION = self.__RIMVO_VERSION__;
 const APP_CACHE = 'rimvo-app-' + VERSION;

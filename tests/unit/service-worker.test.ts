@@ -1,13 +1,24 @@
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { serviceWorker } from '../../vite.config';
 
 type Emitted = { fileName: string; source: string };
-function build(bundleFiles: string[]): Emitted {
+type Hook = (this: unknown, options: unknown, bundle: Record<string, unknown>) => void;
+/** File name to content. `.js` files are chunks and everything else an asset, as in Rollup's bundle. */
+type Files = Record<string, string>;
+function bundleOf(files: Files) {
+  return Object.fromEntries(Object.entries({ 'index.html': '<html></html>', ...files }).map(([name, content]) => [
+    name,
+    name.endsWith('.js') ? { type: 'chunk', code: content } : { type: 'asset', source: content },
+  ]));
+}
+function build(bundleFiles: string[] | Files, publicDir?: string): Emitted {
+  const files = Array.isArray(bundleFiles) ? Object.fromEntries(bundleFiles.map(name => [name, 'content of ' + name])) : bundleFiles;
   const emitted: Emitted[] = [];
-  const plugin = serviceWorker();
-  const hook = plugin.generateBundle as (this: unknown, options: unknown, bundle: Record<string, unknown>) => void;
-  hook.call({ emitFile: (file: Emitted) => emitted.push(file) }, {}, Object.fromEntries(bundleFiles.map(name => [name, {}])));
+  (serviceWorker(publicDir).generateBundle as Hook).call({ emitFile: (file: Emitted) => emitted.push(file) }, {}, bundleOf(files));
   expect(emitted).toHaveLength(1);
   return emitted[0];
 }
@@ -31,10 +42,80 @@ describe('offline service worker', () => {
     expect(new Set(precache).size).toBe(precache.length);
   });
 
-  it('changes its cache version when the built files change', () => {
-    const version = (source: string) => source.match(/const VERSION = "([0-9a-f]+)";/)![1];
-    expect(version(build(['assets/index-a.js']).source)).not.toBe(version(build(['assets/index-b.js']).source));
-    expect(version(build(['assets/index-a.js']).source)).toBe(version(build(['assets/index-a.js']).source));
+  it('runs after the HTML plugins, so the bundle holds the final index.html', () => {
+    expect(serviceWorker().enforce).toBe('post');
+  });
+
+  it('fails the build instead of hashing an index.html it cannot see', () => {
+    const emit = () => (serviceWorker().generateBundle as Hook).call({ emitFile: () => undefined }, {}, { 'assets/index-a.js': { type: 'chunk', code: '' } });
+    expect(emit).toThrow('index.html');
+  });
+});
+
+describe('offline service worker cache version', () => {
+  const version = (source: string) => source.match(/const VERSION = "([0-9a-f]+)";/)![1];
+  const temporary: string[] = [];
+  afterEach(() => { for (const directory of temporary.splice(0)) rmSync(directory, { recursive: true, force: true }); });
+  /** A copy of public/ without the large audio and archives, which a test can change. */
+  function publicCopy() {
+    const directory = mkdtempSync(join(tmpdir(), 'rimvo-public-'));
+    temporary.push(directory);
+    cpSync('public', directory, { recursive: true, filter: source => !/\.(?:wav|flac|mp3|gz)$/.test(source) });
+    return directory;
+  }
+  const files: Files = { 'index.html': '<html><meta charset="UTF-8" /></html>', 'assets/index-a.js': 'console.log(1);', 'assets/index-a.css': 'body{}' };
+
+  it('changes when the names of the built files change', () => {
+    expect(version(build({ 'assets/index-a.js': 'a' }).source)).not.toBe(version(build({ 'assets/index-b.js': 'a' }).source));
+    expect(version(build(files).source)).toBe(version(build(files).source));
+  });
+
+  it('changes when only the content of a built chunk or asset changes', () => {
+    const base = version(build(files).source);
+    expect(version(build({ ...files, 'assets/index-a.js': 'console.log(2);' }).source)).not.toBe(base);
+    expect(version(build({ ...files, 'assets/index-a.css': 'body{margin:0}' }).source)).not.toBe(base);
+  });
+
+  it('changes when only index.html changes, such as a new Content-Security-Policy', () => {
+    const base = version(build(files).source);
+    const policy = '<html><meta charset="UTF-8" /><meta http-equiv="Content-Security-Policy" content="default-src \'self\'" /></html>';
+    expect(version(build({ ...files, 'index.html': policy }).source)).not.toBe(base);
+  });
+
+  it('changes when a precached public file changes without changing its name', () => {
+    const publicDir = publicCopy();
+    const base = version(build(files, publicDir).source);
+    expect(version(build(files, publicDir).source)).toBe(base);
+    for (const name of ['site.webmanifest', 'demo-tracks/manifest.json', 'demo-tracks/after-hours.svg', 'brand/icon-192.png', 'favicon.ico']) {
+      const path = join(publicDir, name);
+      const original = readFileSync(path);
+      writeFileSync(path, Buffer.concat([original, Buffer.from([0x20])]));
+      expect(version(build(files, publicDir).source), name).not.toBe(base);
+      writeFileSync(path, original);
+      expect(version(build(files, publicDir).source), name).toBe(base);
+    }
+  });
+
+  it('ignores files that are not precached', () => {
+    const publicDir = publicCopy();
+    const base = version(build(files, publicDir).source);
+    writeFileSync(join(publicDir, 'SOURCE_CODE.md'), 'changed');
+    writeFileSync(join(publicDir, 'demo-tracks', 'CREDITS.txt'), 'changed');
+    expect(version(build(files, publicDir).source)).toBe(base);
+  });
+
+  it('gives Windows and Linux checkouts the same version', () => {
+    const publicDir = publicCopy();
+    const base = version(build(files, publicDir).source);
+    const withEndings = (content: string, ending: string) => content.replace(/\r\n/g, '\n').replace(/\n/g, ending);
+    const crlf = Object.fromEntries(Object.entries(files).map(([name, content]) => [name, withEndings(content + '\n', '\r\n')]));
+    const lf = Object.fromEntries(Object.entries(files).map(([name, content]) => [name, withEndings(content + '\n', '\n')]));
+    expect(version(build(crlf, publicDir).source)).toBe(version(build(lf, publicDir).source));
+    for (const name of ['site.webmanifest', 'demo-tracks/manifest.json', 'demo-tracks/after-hours.svg']) {
+      const path = join(publicDir, name);
+      writeFileSync(path, withEndings(readFileSync(path, 'utf8'), '\r\n'));
+    }
+    expect(version(build(files, publicDir).source)).toBe(base);
   });
 });
 

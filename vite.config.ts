@@ -8,20 +8,44 @@ import react from '@vitejs/plugin-react';
 const precachedPublic = ['index.html', 'site.webmanifest', 'favicon.ico', 'demo-tracks/manifest.json'];
 const precachedPublicDirectories: Record<string, RegExp> = { brand: /\.png$/, 'demo-tracks': /\.svg$/ };
 
+const textFile = /\.(?:html|js|mjs|css|json|webmanifest|svg|txt)$/;
+
+/** Text is hashed with LF line endings, so Windows and Linux checkouts give the same version. Images are hashed as they are. */
+function contentOf(name: string, data: string | Uint8Array): Buffer {
+  if (!textFile.test(name)) return Buffer.from(data);
+  return Buffer.from((typeof data === 'string' ? data : Buffer.from(data).toString('utf8')).replace(/\r\n/g, '\n'), 'utf8');
+}
+
 /** Emits sw.js with the exact files of this build so the console opens offline. */
 export function serviceWorker(publicDir = 'public'): Plugin {
   return {
     name: 'rimvo-service-worker',
     apply: 'build',
+    // After Vite's own HTML plugin and the Content-Security-Policy transform,
+    // so the bundle already holds the final index.html.
+    enforce: 'post',
     generateBundle(_options, bundle) {
+      const built = (name: string): string | Uint8Array => {
+        const output = bundle[name] as { type?: string; code?: string; source?: string | Uint8Array } | undefined;
+        const data = output?.type === 'chunk' ? output.code : output?.source;
+        if (data === undefined) throw new Error(`Cannot precache ${name}: it is not in the bundle.`);
+        return data;
+      };
       const files = [...precachedPublic];
       for (const [directory, pattern] of Object.entries(precachedPublicDirectories)) {
         files.push(...readdirSync(`${publicDir}/${directory}`).filter(name => pattern.test(name)).map(name => `${directory}/${name}`));
       }
       files.push(...Object.keys(bundle).filter(name => name !== 'index.html' && !name.endsWith('.map')));
       const precache = [...new Set(files)].sort();
-      const template = readFileSync(new URL('./src/pwa/service-worker.js', import.meta.url), 'utf8');
-      const version = createHash('sha256').update(precache.join('\n')).update(template).digest('hex').slice(0, 16);
+      const template = readFileSync(new URL('./src/pwa/service-worker.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+      // The version names every cache, so it must change whenever any cached
+      // file does, even one whose name stays the same (index.html, the manifest, icons).
+      const hash = createHash('sha256').update(template).update('\0');
+      for (const name of precache) {
+        const data = name === 'index.html' || name in bundle ? built(name) : readFileSync(`${publicDir}/${name}`);
+        hash.update(name).update('\0').update(contentOf(name, data)).update('\0');
+      }
+      const version = hash.digest('hex').slice(0, 16);
       const source = template
         .replace('self.__RIMVO_PRECACHE__', JSON.stringify(precache))
         .replace('self.__RIMVO_VERSION__', JSON.stringify(version));
