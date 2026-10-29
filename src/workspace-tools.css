@@ -40,3 +40,10 @@
  .app-shell{grid-template-rows:var(--header-height) 44px var(--wave-height) var(--shell-gap) minmax(412px,1fr) var(--shell-gap) var(--dock-height) 24px}
  .workspace-tools{min-height:44px;padding:0}
 }
+
+/* Landscape phones need room for the deck controls and the session toolbar. */
+@media(max-width:1180px) and (max-height:639px) and (orientation:landscape), (pointer:coarse) and (max-width:1180px) and (orientation:landscape){
+ .app-shell{height:auto;min-height:100dvh;grid-template-rows:44px 30px minmax(202px,1fr) 54px 24px 44px;gap:4px}
+ .deck-panel{--platter-size:clamp(86px,calc(100dvh - 314px),206px)}
+ .workspace-tools{grid-row:6;min-height:44px;padding:0}
+}
