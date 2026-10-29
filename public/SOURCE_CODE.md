@@ -6,9 +6,9 @@ Project-authored RIMVO code is copyright 2026 Arda Çankaya and RIMVO contributo
 
 The runtime application/worker sources, build configuration, dependency lockfile and original assets used by this distribution are available at this immutable revision:
 
-https://github.com/ardacankyaa/rimvo/tree/75ed4afd78af4b67f86956599cb9e3322e066b2b
+https://github.com/ardacankyaa/rimvo/tree/157a1e7f5011bc0097135c66aa4ccb087eb7ddb3
 
-This revision is RIMVO 1.0.4, including the production Content-Security-Policy, offline service-worker fixes (the cache version now follows the content of every precached file) and partial-success library imports. `source/manifest.json` records a normalized runtime-source digest as a guard against accidentally leaving this reference stale. The latest repository additionally contains these licensing materials:
+This revision is RIMVO 1.0.4, including the production Content-Security-Policy, offline service-worker fixes (the cache version follows the content of every precached file), partial-success library imports and the phone landscape layout fix. `source/manifest.json` records a normalized runtime-source digest as a guard against accidentally leaving this reference stale. The latest repository additionally contains these licensing materials:
 
 https://github.com/ardacankyaa/rimvo
 
